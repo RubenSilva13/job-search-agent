@@ -15,7 +15,7 @@ def cabecalhos_github():
 def listar_repositorios(utilizador):
     url = f"{URL_API}/users/{utilizador}/repos"
     parametros = {"per_page": 100, "sort": "updated"}
-    resposta = requests.get(url, headers=cabecalhos_github(), params= parametros, timeput=15)
+    resposta = requests.get(url, headers=cabecalhos_github(), params= parametros, timeout=15)
 
     if resposta.status_code == 404:
         return f"O utilizador '{utilizador}' nao existe no Github"
@@ -38,7 +38,7 @@ def listar_repositorios(utilizador):
 
 
 def ler_readme(utilizador, repositorio):
-    url = f"{URL_API}/repo/{utilizador}/{repositorio}/readme"
+    url = f"{URL_API}/repos/{utilizador}/{repositorio}/readme"
 
     cabecalhos = cabecalhos_github()
     cabecalhos["Accept"] = "application/vnd.github.raw"
@@ -81,7 +81,7 @@ DESCRICOES = [
 
 
      {
-         "type":"function5",
+         "type":"function",
          "function": {
              "name": "ler_readme",
              "description": "Le o readme de um repositorio do github. usa para saber em detalhe o que um projeto faz e que tecnologias usa.",
@@ -98,4 +98,4 @@ DESCRICOES = [
              },
          },
      },
-],
+]
