@@ -8,5 +8,5 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 MODELO = "openai/gpt-oss-120b"
 
-MAX_PASSOS = 8
+MAX_PASSOS = 10
 

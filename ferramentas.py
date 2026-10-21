@@ -1,5 +1,8 @@
 import requests
 from config import GITHUB_TOKEN
+from ferramentas_web import FERRAMENTAS_WEB, DESCRICOES_WEB
+
+
 
 URL_API ="https://api.github.com"
 
@@ -54,11 +57,20 @@ def ler_readme(utilizador, repositorio):
         texto = texto[:limite] + "\n[... readme cortado por ser demasiado longo]"
     return texto
 
+def ler_varios_readmes(utilizador, repositorios):
+    blocos = []
+    for repositorio in repositorios:
+        texto = ler_readme(utilizador, repositorio)
+        blocos.append(f"----README de {repositorio} ----\n{texto}")
+    return "\n\n".join(blocos)
+
+
 
 
 FERRAMENTAS = {
     "listar_repositorios": listar_repositorios,
     "ler_readme": ler_readme,
+    "ler_varios_readmes": ler_varios_readmes,
 }
 
 
@@ -98,4 +110,26 @@ DESCRICOES = [
              },
          },
      },
+     {
+         "type":"function",
+         "function": {
+             "name":"ler_varios_readmes",
+             "description": "Le os readmes de varios repositorios de uma so vez. Prefere esta ferramente a ler_readme sempre que precisares de mais do que um readme.",
+             "parameters": {
+                 "type":"object",
+                 "properties": {
+                     "utilizador":{"type":"string", "description": "Dono dos repositorios"},
+                     "repositorios": {
+                         "type":"array",
+                         "items":{"type":"string"},
+                         "description":"lista com os nomes exatos dos repositorios",
+                     },
+                 },
+                 "required": ["utilizador", "repositorios"],
+             },
+         },
+     },
 ]
+
+FERRAMENTAS.update(FERRAMENTAS_WEB)
+DESCRICOES.extend(DESCRICOES_WEB)
