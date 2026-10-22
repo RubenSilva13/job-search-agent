@@ -1,0 +1,20 @@
+# job-search-agent
+
+Agente de procura de emprego: lê um anúncio de vaga, analisa o portfólio GitHub do utilizador
+(RubenSilva13), pesquisa a empresa e entrega um relatório estruturado (Pydantic, em modelos.py).
+
+## Estrutura
+- config.py — chaves, modelo e MAX_PASSOS
+- ferramentas.py — ferramentas do GitHub (listar_repositorios, ler_readme, ler_portfolio)
+- ferramentas_web.py — ler_pagina_web e pesquisar_web
+- modelos.py — Relatorio e Requisito (Pydantic, com validadores)
+- agente.py — ciclo do agente escrito à mão (sem LangChain), com cache e validação do relatório
+
+## Regras para trabalhar comigo
+- Estou a aprender: antes de alterares um ficheiro, explica em poucas frases o que vais mudar e porquê.
+- Código escrito por extenso: um passo por linha, nomes de variáveis claros, sem compactar.
+- Nomes de variáveis e mensagens em português de Portugal.
+- Não uses LangChain nem frameworks de agentes: o ciclo do agente é escrito à mão de propósito.
+- Testa cada ferramenta sozinha antes de a usares no agente.
+- Nunca mostres nem faças commit do .env. Confirma com `git status` antes de qualquer commit.
+- O ambiente virtual está em venv/ e tem de estar ativo para correr o código.
