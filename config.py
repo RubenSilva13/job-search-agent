@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
-MODELO = "openai/gpt-oss-120b"
+MODELO = "claude-haiku-5-5"
 
 MAX_PASSOS = 10
+MAX_TOKENS = 8000
 

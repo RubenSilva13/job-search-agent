@@ -31,7 +31,7 @@ class Relatorio(BaseModel):
     def requisitos_sem_repeticao(self):
         vistos=set()
         for item in self.requisitos:
-            chave = item.requisitos.strip().lower()
+            chave = item.requisito.strip().lower()
             if chave in vistos:
                 raise ValueError(f"o requisito '{item.requisito}' aparece repetido.")
             vistos.add(chave)

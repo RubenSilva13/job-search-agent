@@ -107,77 +107,59 @@ FERRAMENTAS = {
 
 DESCRICOES = [
     {
-    "type":"function",
-    "function":{
-        "name":"listar_repositorios",
-        "description":"Lista os repositorios publicos de um utilizador do github, com a linguagem principal e a descriçao de cada um.",
-
-        "parameters": {
+        "name": "listar_repositorios",
+        "description": "Lista os repositorios publicos de um utilizador do github, com a linguagem principal e a descriçao de cada um.",
+        "input_schema": {
             "type": "object",
             "properties": {
                 "utilizador": {"type": "string", "description": "Nome do utilizador do github"},
             },
-            "required":["utilizador"],
-         },
-       },
-     },
-
-
-     {
-         "type":"function",
-         "function": {
-             "name": "ler_readme",
-             "description": "Le o readme de um repositorio do github. usa para saber em detalhe o que um projeto faz e que tecnologias usa.",
-
-             "parameters": {
-                 "type":"object",
-                 "properties": {
-                     "utilizador":{"type":"string", "description": "Dono do repositorio"},
-                     "repositorio": {"type":"string", "description":" Nome exato do repositorio"},
-
-                 },
-                 "required":["utilizador", "repositorio"],
-
-             },
-         },
-     },
-     {
-         "type":"function",
-         "function": {
-             "name":"ler_varios_readmes",
-             "description": "Le os readmes de varios repositorios de uma so vez. Prefere esta ferramente a ler_readme sempre que precisares de mais do que um readme.",
-             "parameters": {
-                 "type":"object",
-                 "properties": {
-                     "utilizador":{"type":"string", "description": "Dono dos repositorios"},
-                     "repositorios": {
-                         "type":"array",
-                         "items":{"type":"string"},
-                         "description":"lista com os nomes exatos dos repositorios",
-                     },
-                 },
-                 "required": ["utilizador", "repositorios"],
-             },
-         },
-     },
-
-     {
-        "type": "function",
-        "function": {
-            "name": "ler_portfolio",
-            "description": "Lê o portfólio completo de um utilizador do GitHub: todos os repositórios, "
-                           "com a linguagem, a descrição e o README de cada um. "
-                           "Usa esta ferramenta, uma só vez, para avaliar o utilizador para uma vaga.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "utilizador": {"type": "string", "description": "Nome de utilizador no GitHub"},
-                },
-                "required": ["utilizador"],
+            "required": ["utilizador"],
+        },
+    },
+    {
+        "name": "ler_readme",
+        "description": "Le o readme de um repositorio do github. usa para saber em detalhe o que um projeto faz e que tecnologias usa.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "utilizador": {"type": "string", "description": "Dono do repositorio"},
+                "repositorio": {"type": "string", "description": " Nome exato do repositorio"},
             },
+            "required": ["utilizador", "repositorio"],
+        },
+    },
+    {
+        "name": "ler_varios_readmes",
+        "description": "Le os readmes de varios repositorios de uma so vez. Prefere esta ferramente a ler_readme sempre que precisares de mais do que um readme.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "utilizador": {"type": "string", "description": "Dono dos repositorios"},
+                "repositorios": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "lista com os nomes exatos dos repositorios",
+                },
+            },
+            "required": ["utilizador", "repositorios"],
+        },
+    },
+    {
+        "name": "ler_portfolio",
+        "description": "Lê o portfólio completo de um utilizador do GitHub: todos os repositórios, "
+                       "com a linguagem, a descrição e o README de cada um. "
+                       "Usa esta ferramenta, uma só vez, para avaliar o utilizador para uma vaga.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "utilizador": {"type": "string", "description": "Nome de utilizador no GitHub"},
+            },
+            "required": ["utilizador"],
         },
     },
 ]
 
+
 FERRAMENTAS.update(FERRAMENTAS_WEB)
-DESCRICOES.extend(DESCRICOES_WEB)
+DESCRICOES.extend(DESCRICOES_WEB)

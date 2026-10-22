@@ -1,13 +1,13 @@
 import json
 import os
 from datetime import datetime
-from groq import Groq
+import anthropic
 from pydantic import ValidationError
-from config import GROQ_API_KEY, MODELO, MAX_PASSOS
+from config import ANTHROPIC_API_KEY, MODELO, MAX_PASSOS, MAX_TOKENS
 from ferramentas import FERRAMENTAS, DESCRICOES
 from modelos import Relatorio
 
-cliente = Groq(api_key=GROQ_API_KEY)
+cliente = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 SYSTEM = (
     "És um assistente de carreira que avalia vagas de emprego para um programador.\n"
@@ -30,13 +30,10 @@ SYSTEM = (
 )
 
 DESCRICAO_RELATORIO = {
-    "type": "function",
-    "function": {
-        "name": "entregar_relatorio",
-        "description": "Entrega o relatório final da análise da vaga. "
-                       "Chama esta ferramenta uma única vez, no fim, quando tiveres toda a informação.",
-        "parameters": Relatorio.model_json_schema(),
-    },
+    "name": "entregar_relatorio",
+    "description": "Entrega o relatório final da análise da vaga. "
+                   "Chama esta ferramenta uma única vez, no fim, quando tiveres toda a informação.",
+    "input_schema": Relatorio.model_json_schema(),
 }
 
 TODAS_AS_DESCRICOES = DESCRICOES + [DESCRICAO_RELATORIO]
@@ -44,15 +41,10 @@ TODAS_AS_DESCRICOES = DESCRICOES + [DESCRICAO_RELATORIO]
 SIMBOLOS = {"cumpre": "✅", "parcial": "🟡", "falta": "❌", "nao_confirmado": "❔"}
 
 
-def executar_ferramenta(nome, argumentos_texto):
+def executar_ferramenta(nome, argumentos):
     """Executa uma ferramenta normal. Devolve sempre texto, mesmo em caso de erro."""
     if nome not in FERRAMENTAS:
         return f"Erro: a ferramenta '{nome}' não existe."
-
-    try:
-        argumentos = json.loads(argumentos_texto)
-    except json.JSONDecodeError:
-        return "Erro: os argumentos não são JSON válido."
 
     funcao = FERRAMENTAS[nome]
     try:
@@ -61,15 +53,10 @@ def executar_ferramenta(nome, argumentos_texto):
         return f"Erro ao executar '{nome}': {erro}"
 
 
-def validar_relatorio(argumentos_texto):
+def validar_relatorio(argumentos):
     """Devolve (relatorio, None) se o relatório for válido, ou (None, erro) se não for."""
     try:
-        dados = json.loads(argumentos_texto)
-    except json.JSONDecodeError:
-        return None, "Erro: o relatório não é JSON válido. Volta a chamar entregar_relatorio."
-
-    try:
-        relatorio = Relatorio.model_validate(dados)
+        relatorio = Relatorio.model_validate(argumentos)
     except ValidationError as erro:
         mensagem = (
             "O relatório tem erros e não foi aceite. "
@@ -83,41 +70,23 @@ def validar_relatorio(argumentos_texto):
 def pedir_ao_modelo(mensagens, forcar_relatorio):
     """Pede ao modelo a próxima ação. No último passo, obriga-o a entregar o relatório."""
     if forcar_relatorio:
-        escolha = {"type": "function", "function": {"name": "entregar_relatorio"}}
+        escolha = {"type": "tool", "name": "entregar_relatorio"}
     else:
-        escolha = "auto"
+        escolha = {"type": "auto"}
 
-    resposta = cliente.chat.completions.create(
+    resposta = cliente.messages.create(
         model=MODELO,
+        max_tokens=MAX_TOKENS,
+        system=SYSTEM,
         messages=mensagens,
         tools=TODAS_AS_DESCRICOES,
         tool_choice=escolha,
     )
-    return resposta.choices[0].message
-
-
-def guardar_pedido_no_historico(mensagens, mensagem):
-    """Guarda no histórico as ferramentas que o modelo pediu (a API exige-o)."""
-    chamadas = []
-    for chamada in mensagem.tool_calls:
-        chamadas.append({
-            "id": chamada.id,
-            "type": "function",
-            "function": {
-                "name": chamada.function.name,
-                "arguments": chamada.function.arguments,
-            },
-        })
-    mensagens.append({
-        "role": "assistant",
-        "content": mensagem.content or "",
-        "tool_calls": chamadas,
-    })
+    return resposta
 
 
 def correr_agente(tarefa):
     mensagens = [
-        {"role": "system", "content": SYSTEM},
         {"role": "user", "content": tarefa},
     ]
     cache = {}
@@ -126,50 +95,64 @@ def correr_agente(tarefa):
         print(f"\n--- Passo {passo} ---")
 
         ultimo_passo = passo == MAX_PASSOS
-        mensagem = pedir_ao_modelo(mensagens, forcar_relatorio=ultimo_passo)
+        resposta = pedir_ao_modelo(mensagens, forcar_relatorio=ultimo_passo)
+
+        # a API exige que o pedido do assistente fique no histórico, tal como veio
+        mensagens.append({"role": "assistant", "content": resposta.content})
+
+        pedidos = []
+        for bloco in resposta.content:
+            if bloco.type == "tool_use":
+                pedidos.append(bloco)
 
         # o modelo respondeu em texto: lembrá-lo de que tem de entregar o relatório
-        if not mensagem.tool_calls:
+        if not pedidos:
             print("💬 Respondeu em texto. A pedir o relatório estruturado.")
-            mensagens.append({"role": "assistant", "content": mensagem.content or ""})
             mensagens.append({
                 "role": "user",
                 "content": "Não respondas em texto. Entrega o resultado chamando entregar_relatorio.",
             })
             continue
 
-        guardar_pedido_no_historico(mensagens, mensagem)
+        resultados = []
 
-        for chamada in mensagem.tool_calls:
-            nome = chamada.function.name
-            argumentos_texto = chamada.function.arguments
+        for pedido in pedidos:
+            nome = pedido.name
+            argumentos = pedido.input
+            erro_na_ferramenta = False
 
             if nome == "entregar_relatorio":
                 print("📋 entregar_relatorio(...)")
-                relatorio, erro = validar_relatorio(argumentos_texto)
+                relatorio, erro = validar_relatorio(argumentos)
 
                 if relatorio is not None:
                     return relatorio  # relatório válido: o ciclo termina aqui
 
                 print(f"   ↳ ❌ Relatório recusado: {erro[:300]}")
                 resultado = erro
+                erro_na_ferramenta = True
 
             else:
+                argumentos_texto = json.dumps(argumentos, ensure_ascii=False, sort_keys=True)
                 print(f"🔧 {nome}({argumentos_texto})")
                 chave = (nome, argumentos_texto)
                 if chave in cache:
                     resultado = cache[chave]
                     print("   (já tinha este resultado, reutilizado)")
                 else:
-                    resultado = executar_ferramenta(nome, argumentos_texto)
+                    resultado = executar_ferramenta(nome, argumentos)
                     cache[chave] = resultado
                 print(f"   ↳ {resultado[:150]}...")
 
-            mensagens.append({
-                "role": "tool",
-                "tool_call_id": chamada.id,
+            resultados.append({
+                "type": "tool_result",
+                "tool_use_id": pedido.id,
                 "content": resultado,
+                "is_error": erro_na_ferramenta,
             })
+
+        # todos os resultados deste passo vão juntos, numa só mensagem do utilizador
+        mensagens.append({"role": "user", "content": resultados})
 
     return None  # nem no último passo conseguiu entregar um relatório válido
 

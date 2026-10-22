@@ -90,34 +90,25 @@ FERRAMENTAS_WEB ={
 
 DESCRICOES_WEB = [
     {
-        "type": "function",
-        "function": {
-            "name":"ler_pagina_web",
-            "description": "Abre um link e devolve o texto da pagina. usa pra ler anuncios de vagas ou o site de uma empresa. Nao funciona com paginas que exigem login.",
-            "parameters" : {
-                "type": "object",
-                "properties": {
-                    "url":{"type": "string", "description": "Endereço completo, a começar com https://"},
-                },
-                "required": ["url"],
+        "name": "ler_pagina_web",
+        "description": "Abre um link e devolve o texto da pagina. usa pra ler anuncios de vagas ou o site de uma empresa. Nao funciona com paginas que exigem login.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "Endereço completo, a começar com https://"},
             },
-
+            "required": ["url"],
         },
     },
     {
-        "type":"function",
-        "function": {
-            "name":"pesquisar_web",
-            "description":"Pesquisa na web e devolve os 5 primeiros resultados (titulo, resumo e link). Usa para saber o que uma empresa faz, que tecnologias usa ou noticias recentes",
-            "parameters": {
-                "type":"object",
-                "properties": {
-                    "consulta":{"type": "string", "description":"Termos de pesquisa"},
-                },
-                "required": ["consulta"],
+        "name": "pesquisar_web",
+        "description": "Pesquisa na web e devolve os 5 primeiros resultados (titulo, resumo e link). Usa para saber o que uma empresa faz, que tecnologias usa ou noticias recentes",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "consulta": {"type": "string", "description": "Termos de pesquisa"},
             },
-                    
+            "required": ["consulta"],
         },
-
     },
 ]
