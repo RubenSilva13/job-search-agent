@@ -1,0 +1,69 @@
+{
+  "nome": "Ruben Silva",
+  "localizacao": "Braga",
+  "disponibilidade": "",
+  "resumo": "I hold a degree in Computer Engineering from the Polytechnic Institute of Bragança (Portugal). Throughout my studies I built a solid foundation in programming, networks and operating systems, and machine learning.",
+  "formacao": [
+    {
+      "curso": "Engenharia Informatica",
+      "instituicao": "instituto politecnico de bragança",
+      "grau": "licenciatura",
+      "ano_inicio": 2022,
+      "ano_fim": 2026,
+      "estado": "concluido"
+    }
+  ],
+  "linguas": [
+    {
+      "lingua": "Português",
+      "nivel": "nativo"
+    },
+    {
+      "lingua": "Ingles",
+      "nivel": "b2/c1"
+    }
+  ],
+  "experiencia": [
+    {
+      "funcao": "Projeto final de licenciatura",
+      "empresa": "Instituto Politécnico de Bragança",
+      "ano_inicio": 2026,
+      "ano_fim": 2026,
+      "descricao": "De fevereiro a junho de 2026. Aplicação iOS para captura de dados 3D com o sensor LiDAR, com uma pipeline de análise em Python. Deu origem a duas publicações científicas."
+    }
+  ],
+  "competencias": {
+    "linguagens": [
+      "Python (bom domínio)",
+      "Swift (bom domínio)",
+      "JavaScript (nível intermédio, frontend)",
+      "Java (nível escolar)",
+      "C (nível escolar)",
+      "C++ (nível escolar)",
+      "C# (nível escolar)"
+    ],
+    "ferramentas": [
+      "React (nível intermédio)",
+      "FastAPI (nível intermédio)",
+      "MySQL (nível intermédio)",
+      "SwiftUI (nível intermédio)",
+      "ARKit (nível intermédio)",
+      "NumPy (nível intermédio)",
+      "SciPy (nível intermédio)",
+      "Matplotlib (nível intermédio)",
+      "Docker (nível intermédio)",
+      "Linux (nível intermédio)",
+      "Git (nível intermédio)",
+      "VMware (nível intermédio)",
+      "LangChain (nível básico, a aprender)",
+      "Hugging Face (nível básico, a aprender)",
+      "RAG (nível básico, a aprender)"
+    ],
+    "soft_skills": []
+  },
+  "preferencias": {
+    "tipo_de_vaga": [],
+    "regime": [],
+    "areas_de_interesse": []
+  }
+}
