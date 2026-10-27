@@ -29,7 +29,7 @@
       "empresa": "Instituto Politécnico de Bragança",
       "ano_inicio": 2026,
       "ano_fim": 2026,
-      "descricao": "De fevereiro a junho de 2026. Aplicação iOS para captura de dados 3D com o sensor LiDAR, com uma pipeline de análise em Python. Deu origem a duas publicações científicas."
+      "descricao": "De fevereiro a junho de 2026. Aplicação iOS para captura de dados 3D com o sensor LiDAR, com uma pipeline de análise em Python. Deu origem a duas publicações científicas, em que participou como autor, com o orientador. Pelo menos uma foi aceite e apresentada pelo orientador no TEEM 2026."
     }
   ],
   "competencias": {
@@ -59,7 +59,9 @@
       "Hugging Face (nível básico, a aprender)",
       "RAG (nível básico, a aprender)"
     ],
-    "soft_skills": []
+    "soft_skills": [
+      "Comunicação escrita (artigo científico em que participou como autor, aceite e apresentado no TEEM 2026)"
+    ]
   },
   "preferencias": {
     "tipo_de_vaga": [],

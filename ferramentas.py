@@ -1,3 +1,4 @@
+import json
 import requests
 from config import GITHUB_TOKEN
 from ferramentas_web import FERRAMENTAS_WEB, DESCRICOES_WEB
@@ -97,11 +98,30 @@ def ler_portfolio(utilizador):
 
 
 
+CAMINHO_PERFIL = "perfil.json"
+
+
+def ler_perfil():
+    """Lê o perfil do utilizador (formação, línguas, experiência, competências) do perfil.json."""
+    try:
+        with open(CAMINHO_PERFIL, "r", encoding="utf-8") as ficheiro:
+            perfil = json.load(ficheiro)
+    except FileNotFoundError:
+        return f"Erro: o ficheiro '{CAMINHO_PERFIL}' não existe."
+    except json.JSONDecodeError as erro:
+        return f"Erro: o ficheiro '{CAMINHO_PERFIL}' está mal escrito ({erro})."
+
+    texto = json.dumps(perfil, ensure_ascii=False, indent=2)
+    return texto
+
+
+
 FERRAMENTAS = {
     "listar_repositorios": listar_repositorios,
     "ler_readme": ler_readme,
     "ler_varios_readmes": ler_varios_readmes,
     "ler_portfolio": ler_portfolio,
+    "ler_perfil": ler_perfil,
 }
 
 
@@ -158,8 +178,18 @@ DESCRICOES = [
             "required": ["utilizador"],
         },
     },
+    {
+        "name": "ler_perfil",
+        "description": "Lê o perfil do utilizador: formação, línguas, experiência e competências com o nível de cada uma. "
+                       "Usa esta ferramenta, uma só vez, para confirmar requisitos que o GitHub não mostra, "
+                       "como formação e línguas.",
+        "input_schema": {
+            "type":"object",
+            "properties": {},
+        },
+    },
 ]
 
 
 FERRAMENTAS.update(FERRAMENTAS_WEB)
-DESCRICOES.extend(DESCRICOES_WEB)
+DESCRICOES.extend(DESCRICOES_WEB)
