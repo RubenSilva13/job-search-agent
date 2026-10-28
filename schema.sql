@@ -4,8 +4,13 @@ CREATE TABLE IF NOT EXISTS perfil (
     nome              TEXT NOT NULL,
     localizacao       TEXT,
     disponibilidade   TEXT,
-    resumo            TEXT
+    resumo            TEXT,
+    -- as preferências (locais, regimes, áreas) guardadas como JSON, tal como estão no perfil.json
+    preferencias      JSONB
 );
+
+-- para uma base de dados que já existia sem esta coluna (não apaga dados)
+ALTER TABLE perfil ADD COLUMN IF NOT EXISTS preferencias JSONB;
 
 
 CREATE TABLE IF NOT EXISTS formacao (

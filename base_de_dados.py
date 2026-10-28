@@ -1,6 +1,7 @@
 import json
 import psycopg
 from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
 from config import BD_UTILIZADOR, BD_PASSWORD, BD_NOME, BD_SERVIDOR, BD_PORTA
 
 
@@ -46,12 +47,14 @@ def carregar_perfil_ficheiro(caminho="perfil.json"):
 
             # perfil: uma só linha (id = 1). Se já existir, atualiza.
             cursor.execute(
-                "INSERT INTO perfil (id, nome, localizacao, disponibilidade, resumo) "
-                "VALUES (1, %s, %s, %s, %s) "
+                "INSERT INTO perfil (id, nome, localizacao, disponibilidade, resumo, preferencias) "
+                "VALUES (1, %s, %s, %s, %s, %s) "
                 "ON CONFLICT (id) DO UPDATE SET "
                 "nome = EXCLUDED.nome, localizacao = EXCLUDED.localizacao, "
-                "disponibilidade = EXCLUDED.disponibilidade, resumo = EXCLUDED.resumo",
-                (perfil["nome"], perfil["localizacao"], perfil["disponibilidade"], perfil["resumo"]),
+                "disponibilidade = EXCLUDED.disponibilidade, resumo = EXCLUDED.resumo, "
+                "preferencias = EXCLUDED.preferencias",
+
+                (perfil["nome"], perfil["localizacao"], perfil["disponibilidade"], perfil["resumo"], Jsonb(perfil.get("preferencias", {}))),
             )
 
             # tabelas de listas: apaga o que havia e volta a inserir
@@ -109,7 +112,7 @@ def ler_perfil_da_base():
         with ligacao.cursor(row_factory=dict_row) as cursor:
 
             cursor.execute(
-                "SELECT nome, localizacao, disponibilidade, resumo FROM perfil WHERE id = 1"
+                "SELECT nome, localizacao, disponibilidade, resumo, preferencias FROM perfil WHERE id = 1"
             )
             perfil = cursor.fetchone()
             if perfil is None:

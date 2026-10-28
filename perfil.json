@@ -64,8 +64,27 @@
     ]
   },
   "preferencias": {
-    "tipo_de_vaga": [],
-    "regime": [],
-    "areas_de_interesse": []
+    "localizacoes": [
+      {
+        "local": "Braga",
+        "regimes": ["presencial", "hibrido", "remoto"],
+        "prioridade": "preferida"
+      },
+      {
+        "local": "Porto",
+        "regimes": ["hibrido"],
+        "prioridade": "aceitavel"
+      },
+      {
+        "local": "qualquer local",
+        "regimes": ["remoto"],
+        "prioridade": "aceitavel"
+      }
+    ],
+    "senioridade": ["junior"],
+    "areas": {
+      "aceites": ["engenharia de software"],
+      "preferidas": ["Python", "inteligência artificial"]
+    }
   }
 }
