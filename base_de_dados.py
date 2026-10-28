@@ -1,5 +1,6 @@
 import json
 import psycopg
+from psycopg.rows import dict_row
 from config import BD_UTILIZADOR, BD_PASSWORD, BD_NOME, BD_SERVIDOR, BD_PORTA
 
 
@@ -11,6 +12,7 @@ def abrir_ligacao():
         dbname=BD_NOME,
         user=BD_UTILIZADOR,
         password=BD_PASSWORD,
+        connect_timeout=5,
     )
     return ligacao
 
@@ -98,6 +100,52 @@ def carregar_perfil_ficheiro(caminho="perfil.json"):
                         "VALUES (%s, %s, %s, %s)",
                         (tipo, nome, nivel, evidencia),
                     )
+
+
+def ler_perfil_da_base():
+    """Lê o perfil das tabelas e devolve-o como dicionário. Devolve None se ainda não foi carregado."""
+    with abrir_ligacao() as ligacao:
+        
+        with ligacao.cursor(row_factory=dict_row) as cursor:
+
+            cursor.execute(
+                "SELECT nome, localizacao, disponibilidade, resumo FROM perfil WHERE id = 1"
+            )
+            perfil = cursor.fetchone()
+            if perfil is None:
+                return None
+
+            cursor.execute(
+                "SELECT curso, instituicao, grau, ano_inicio, ano_fim, estado "
+                "FROM formacao ORDER BY id"
+            )
+            perfil["formacao"] = cursor.fetchall()
+
+            cursor.execute("SELECT lingua, nivel FROM linguas ORDER BY id")
+            perfil["linguas"] = cursor.fetchall()
+
+            cursor.execute(
+                "SELECT funcao, empresa, ano_inicio, ano_fim, descricao "
+                "FROM experiencia ORDER BY id"
+            )
+            perfil["experiencia"] = cursor.fetchall()
+
+            # competências: o tipo da tabela decide em que lista fica cada uma
+            cursor.execute("SELECT tipo, nome, nivel, evidencia FROM competencias ORDER BY id")
+            listas = {"linguagem": "linguagens", "ferramenta": "ferramentas", "soft_skill": "soft_skills"}
+            competencias = {"linguagens": [], "ferramentas": [], "soft_skills": []}
+
+            for linha in cursor.fetchall():
+                item = {"nome": linha["nome"]}
+                if linha["nivel"]:
+                    item["nivel"] = linha["nivel"]
+                if linha["evidencia"]:
+                    item["evidencia"] = linha["evidencia"]
+                competencias[listas[linha["tipo"]]].append(item)
+
+            perfil["competencias"] = competencias
+
+    return perfil
 
 
 if __name__ == "__main__":

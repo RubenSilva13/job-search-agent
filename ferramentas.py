@@ -1,5 +1,7 @@
 import json
+import psycopg
 import requests
+from base_de_dados import ler_perfil_da_base
 from config import GITHUB_TOKEN
 from ferramentas_web import FERRAMENTAS_WEB, DESCRICOES_WEB
 
@@ -98,18 +100,18 @@ def ler_portfolio(utilizador):
 
 
 
-CAMINHO_PERFIL = "perfil.json"
-
-
 def ler_perfil():
-    """Lê o perfil do utilizador (formação, línguas, experiência, competências) do perfil.json."""
+    """Lê o perfil do utilizador (formação, línguas, experiência, competências) da base de dados."""
     try:
-        with open(CAMINHO_PERFIL, "r", encoding="utf-8") as ficheiro:
-            perfil = json.load(ficheiro)
-    except FileNotFoundError:
-        return f"Erro: o ficheiro '{CAMINHO_PERFIL}' não existe."
-    except json.JSONDecodeError as erro:
-        return f"Erro: o ficheiro '{CAMINHO_PERFIL}' está mal escrito ({erro})."
+        perfil = ler_perfil_da_base()
+    except psycopg.Error as erro:
+        return (
+            "Erro: não foi possível ler a base de dados. "
+            f"Confirma que o Docker está a correr ({erro})."
+        )
+
+    if perfil is None:
+        return "Erro: o perfil ainda não foi carregado. Corre 'python base_de_dados.py'."
 
     texto = json.dumps(perfil, ensure_ascii=False, indent=2)
     return texto

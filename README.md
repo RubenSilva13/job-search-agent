@@ -32,7 +32,7 @@ O modelo decide o que fazer; o código garante o que tem de acontecer sempre:
 | `pesquisar_web` | Pesquisa na web (DuckDuckGo) |
 | `ler_portfolio` | Lê todos os repositórios públicos do GitHub, com o README de cada um |
 | `listar_repositorios`, `ler_readme`, `ler_varios_readmes` | Versões mais finas do GitHub |
-| `ler_perfil` | Lê `perfil.json`: formação, línguas, experiência e competências com o nível |
+| `ler_perfil` | Lê o perfil da base de dados: formação, línguas, experiência e competências com o nível |
 | `entregar_relatorio` | Entrega o relatório final (validado com Pydantic) |
 
 ## Relatório
@@ -55,13 +55,16 @@ config.py           chaves, modelo e limites
 ferramentas.py      ferramentas do GitHub e do perfil
 ferramentas_web.py  ler páginas e pesquisar na web
 modelos.py          Relatorio e Requisito (Pydantic, com validadores)
-perfil.json         perfil do utilizador
+base_de_dados.py    ligação ao PostgreSQL, carregar e ler o perfil
+schema.sql          tabelas da base de dados
+docker-compose.yml  PostgreSQL num contentor Docker
+perfil.json         perfil do utilizador, carregado para a base de dados
 ROADMAP.md          plano do projeto
 ```
 
 ## Como correr
 
-Precisa de Python 3 e de uma chave da API da Anthropic.
+Precisa de Python 3, do Docker e de uma chave da API da Anthropic.
 
 ```bash
 python -m venv venv
@@ -74,12 +77,20 @@ Cria um ficheiro `.env` na raiz:
 ```
 ANTHROPIC_API_KEY=a-tua-chave
 GITHUB_TOKEN=opcional
+POSTGRES_PASSWORD=uma-palavra-passe-tua
 ```
 
 O `GITHUB_TOKEN` é opcional e só aumenta o limite de pedidos à API do GitHub.
 
-Edita o `perfil.json` com os teus dados. O nome de utilizador do GitHub indica-se na tarefa, como
-no exemplo abaixo. Depois:
+Edita o `perfil.json` com os teus dados. Depois arranca a base de dados e carrega o perfil
+(só é preciso repetir o segundo comando quando alteras o `perfil.json`):
+
+```bash
+docker compose up -d
+python base_de_dados.py
+```
+
+O nome de utilizador do GitHub indica-se na tarefa, como no exemplo abaixo. Para correr o agente:
 
 ```bash
 python agente.py
@@ -95,13 +106,18 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
 
 - Páginas que exigem login (como o LinkedIn) ou que carregam o conteúdo com JavaScript não são
   lidas. Funciona melhor com anúncios em sites de empresas e plataformas abertas.
-- O agente só conhece o que está no GitHub e no `perfil.json`. Não lê o CV.
+- O agente só conhece o que está no GitHub e no perfil guardado na base de dados. Não lê o CV.
+- O score varia entre execuções da mesma vaga, porque o modelo decide quais são os requisitos
+  principais. Os estados de cada requisito são mais fiáveis do que o número.
+- Se a base de dados estiver desligada, o `ler_perfil` devolve um erro e o relatório sai sem o perfil.
 
 ## Estado e próximos passos
 
 Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatório estruturado com
-Pydantic, migração para a API do Claude e leitura do perfil.
+Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil do
+utilizador, lido pelo agente.
 
-Planeado (ver [ROADMAP.md](ROADMAP.md)): base de dados PostgreSQL, recolha diária de vagas,
-registo dos passos e custos, avaliação com vagas classificadas à mão, frontend em React/Next.js,
-testes, CI e Docker.
+Em curso: guardar na base de dados as vagas e os relatórios (hoje os relatórios ficam em JSON).
+
+Planeado (ver [ROADMAP.md](ROADMAP.md)): recolha diária de vagas, registo dos passos e custos,
+avaliação com vagas classificadas à mão, frontend em React/Next.js, testes, CI e deploy.
