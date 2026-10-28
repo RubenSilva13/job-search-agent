@@ -1,0 +1,21 @@
+services:
+  base_de_dados:
+    image: postgres:17
+    container_name: job-search-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agente
+      # a palavra-passe vem do ficheiro .env, nunca fica escrita aqui
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: job_search
+    ports:
+      # 127.0.0.1: só aceita ligações da própria máquina
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # os dados ficam neste volume e sobrevivem quando o contentor é desligado
+      - dados_postgres:/var/lib/postgresql/data
+      # os ficheiros desta pasta correm na primeira vez que a base de dados é criada
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+volumes:
+  dados_postgres:
