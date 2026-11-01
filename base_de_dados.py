@@ -151,6 +151,40 @@ def ler_perfil_da_base():
     return perfil
 
 
+def guardar_vaga(titulo, empresa, url, localizacao=None, descricao=None, fonte=None):
+    """Guarda uma vaga e devolve o id. Se o url já existir, atualiza e devolve o id que já tinha."""
+    with abrir_ligacao() as ligacao:
+        with ligacao.cursor() as cursor:
+            # DO UPDATE (e não DO NOTHING) para o RETURNING devolver sempre o id
+            cursor.execute(
+                "INSERT INTO vagas (titulo, empresa, url, localizacao, descricao, fonte) "
+                "VALUES (%s, %s, %s, %s, %s, %s) "
+                "ON CONFLICT (url) DO UPDATE SET "
+                "titulo = EXCLUDED.titulo, empresa = EXCLUDED.empresa, "
+                "localizacao = EXCLUDED.localizacao, descricao = EXCLUDED.descricao "
+                "RETURNING id",
+                (titulo, empresa, url, localizacao, descricao, fonte),
+            )
+            vaga_id = cursor.fetchone()[0]
+
+    return vaga_id
+
+
+def guardar_analise(vaga_id, relatorio):
+    """Guarda o relatório de uma vaga e devolve o id da análise."""
+    with abrir_ligacao() as ligacao:
+        with ligacao.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO analises (vaga_id, score, relatorio) "
+                "VALUES (%s, %s, %s) "
+                "RETURNING id",
+                (vaga_id, relatorio.score, Jsonb(relatorio.model_dump(mode="json"))),
+            )
+            analise_id = cursor.fetchone()[0]
+
+    return analise_id
+
+
 if __name__ == "__main__":
     carregar_perfil_ficheiro()
     print("Perfil carregado na base de dados.")
