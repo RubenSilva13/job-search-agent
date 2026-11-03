@@ -1,8 +1,11 @@
 import json
 import os
+import re
 from datetime import datetime
 import anthropic
+import psycopg
 from pydantic import ValidationError
+from base_de_dados import guardar_vaga, guardar_analise
 from config import ANTHROPIC_API_KEY, MODELO, MAX_PASSOS, MAX_TOKENS
 from ferramentas import FERRAMENTAS, DESCRICOES
 from modelos import Relatorio
@@ -196,6 +199,39 @@ def mostrar_relatorio(relatorio):
         print(f"  - {sugestao}")
 
 
+def extrair_url(tarefa):
+    """Devolve o primeiro link que aparece na tarefa, ou None se não houver nenhum."""
+    encontrado = re.search(r"https?://\S+", tarefa)
+    if encontrado is None:
+        return None
+
+    # tira a pontuação que possa ter ficado colada ao fim do link
+    return encontrado.group(0).rstrip(".,;)>]")
+
+
+def guardar_na_base(relatorio, tarefa):
+    """Guarda a vaga e a análise na base de dados. Se não conseguir, avisa e continua."""
+    url = extrair_url(tarefa)
+    if url is None:
+        print("\n⚠️  A tarefa não tem nenhum link, por isso a vaga não foi guardada na base de dados.")
+        return
+
+    try:
+        vaga_id = guardar_vaga(
+            relatorio.vaga,
+            relatorio.empresa,
+            url,
+            localizacao=relatorio.localizacao,
+            fonte="manual",
+        )
+        analise_id = guardar_analise(vaga_id, relatorio)
+    except psycopg.Error as erro:
+        print(f"\n⚠️  Não foi possível guardar na base de dados ({erro}).")
+        return
+
+    print(f"🗄️  Base de dados: vaga {vaga_id}, análise {analise_id}")
+
+
 if __name__ == "__main__":
     tarefa = input("Tarefa: ")
     relatorio = correr_agente(tarefa)
@@ -206,3 +242,4 @@ if __name__ == "__main__":
         mostrar_relatorio(relatorio)
         caminho = guardar_relatorio(relatorio)
         print(f"\n💾 Guardado em {caminho}")
+        guardar_na_base(relatorio, tarefa)
