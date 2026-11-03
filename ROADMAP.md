@@ -7,7 +7,7 @@ prepara tudo e eu decido.
 ## Fases
 1. ✅ Ciclo do agente escrito à mão, com ferramentas do GitHub
 2. ✅ Ferramentas web (ler páginas, pesquisar), relatório estruturado com Pydantic, migração para a API do Claude
-3. Base de dados (PostgreSQL) com o meu perfil (CV, formação, línguas), vagas e candidaturas
+3. ✅ Base de dados (PostgreSQL) com o meu perfil (CV, formação, línguas), vagas e candidaturas
 4. Recolha diária de vagas, agendada, a partir de fontes com acesso oficial (APIs ou RSS)
 5. Registo de cada passo do agente (traces) e dos custos
 6. Avaliação: um conjunto de vagas classificadas por mim, para medir as decisões do agente
@@ -19,8 +19,13 @@ prepara tudo e eu decido.
   Na fase 3 ou 4, migrar para o LangGraph, quando forem precisos estado persistente e aprovação humana.
 - O modelo decide o que fazer; o código garante o que tem de acontecer sempre
   (por exemplo, ler o portfólio completo com ler_portfolio).
-- O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs.
+- O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
 
 ## Problemas conhecidos
-- O agente não conhece a minha formação nem as línguas que falo (só vê o GitHub). Resolve-se na fase 3.
+- O score varia entre execuções da mesma vaga. Mede-se na fase 6.
+- O perfil existe em dois sítios (perfil.json e base de dados). Edita-se o ficheiro e recarrega-se
+  com python base_de_dados.py. Fica só a base de dados quando existir o frontend (fase 7).
+- O url da vaga é guardado como veio, com parâmetros de rastreio. A mesma vaga com outro link
+  pode entrar duas vezes. Limpar o url por fonte, na fase 4.
+- A tabela candidaturas e as preferências do perfil ainda não são usadas pelo agente.
 - A extração de páginas web falha em sites que exigem login (LinkedIn) ou que usam JavaScript.

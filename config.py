@@ -5,6 +5,7 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+ITJOBS_API_KEY = os.environ.get("ITJOBS_API_KEY")
 
 BD_UTILIZADOR = "agente"
 BD_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
