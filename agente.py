@@ -205,7 +205,6 @@ def extrair_url(tarefa):
     if encontrado is None:
         return None
 
-    # tira a pontuação que possa ter ficado colada ao fim do link
     return encontrado.group(0).rstrip(".,;)>]")
 
 

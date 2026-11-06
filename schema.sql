@@ -55,9 +55,6 @@ CREATE TABLE IF NOT EXISTS competencias (
 );
 
 
--- ---------------------------------------------------------------------------
--- AS VAGAS E O QUE SE FAZ COM ELAS
--- ---------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS vagas (
     id                INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
