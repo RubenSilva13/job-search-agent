@@ -151,19 +151,29 @@ def ler_perfil_da_base():
     return perfil
 
 
-def guardar_vaga(titulo, empresa, url, localizacao=None, descricao=None, fonte=None):
+def guardar_vaga(titulo, empresa, url, localizacao=None, descricao=None, fonte=None,
+                 publicada_em=None, regime=None, aceite=None, motivo_filtro=None):
     """Guarda uma vaga e devolve o id. Se o url já existir, atualiza e devolve o id que já tinha."""
     with abrir_ligacao() as ligacao:
         with ligacao.cursor() as cursor:
-            # DO UPDATE (e não DO NOTHING) para o RETURNING devolver sempre o id
+            # DO UPDATE (e não DO NOTHING) para o RETURNING devolver sempre o id.
+            # COALESCE(novo, antigo): se o valor novo vier vazio, mantém o que já lá estava.
+            # Assim o agente (que não conhece a data nem a decisão do filtro) não apaga o que o recolhedor guardou.
             cursor.execute(
-                "INSERT INTO vagas (titulo, empresa, url, localizacao, descricao, fonte) "
-                "VALUES (%s, %s, %s, %s, %s, %s) "
+                "INSERT INTO vagas (titulo, empresa, url, localizacao, descricao, fonte, "
+                "publicada_em, regime, aceite, motivo_filtro) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                 "ON CONFLICT (url) DO UPDATE SET "
                 "titulo = EXCLUDED.titulo, empresa = EXCLUDED.empresa, "
-                "localizacao = EXCLUDED.localizacao, descricao = EXCLUDED.descricao "
+                "localizacao = COALESCE(EXCLUDED.localizacao, vagas.localizacao), "
+                "descricao = COALESCE(EXCLUDED.descricao, vagas.descricao), "
+                "publicada_em = COALESCE(EXCLUDED.publicada_em, vagas.publicada_em), "
+                "regime = COALESCE(EXCLUDED.regime, vagas.regime), "
+                "aceite = COALESCE(EXCLUDED.aceite, vagas.aceite), "
+                "motivo_filtro = COALESCE(EXCLUDED.motivo_filtro, vagas.motivo_filtro) "
                 "RETURNING id",
-                (titulo, empresa, url, localizacao, descricao, fonte),
+                (titulo, empresa, url, localizacao, descricao, fonte,
+                 publicada_em, regime, aceite, motivo_filtro),
             )
             vaga_id = cursor.fetchone()[0]
 

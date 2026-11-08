@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
+from base_de_dados import guardar_vaga, ler_perfil_da_base
 from config import ITJOBS_API_KEY
+from filtro import filtrar_vaga
 
 URL_ITJOBS = "https://api.itjobs.pt/job/list.json"
 
@@ -52,6 +54,45 @@ def recolher_itjobs(limite=100):
         })
 
     return vagas
+
+
+def recolher_e_guardar(limite=100):
+    """Recolhe as vagas, filtra-as pelas preferências e guarda todas na base de dados.
+
+    Guarda também as recusadas, com o motivo, para não as voltar a tratar e para se poder rever o filtro.
+    """
+    perfil = ler_perfil_da_base()
+    if perfil is None:
+        print("O perfil ainda não foi carregado. Corre 'python base_de_dados.py'.")
+        return
+
+    preferencias = perfil["preferencias"]
+    vagas = recolher_itjobs(limite)
+    if not vagas:
+        print("Nenhuma vaga recolhida, nada foi guardado.")
+        return
+
+    aceites = 0
+    for vaga in vagas:
+        decisao = filtrar_vaga(vaga, preferencias)
+
+        guardar_vaga(
+            vaga["titulo"],
+            vaga["empresa"],
+            vaga["url"],
+            localizacao=", ".join(vaga["localizacoes"]) or None,
+            descricao=vaga["descricao"],
+            fonte=vaga["fonte"],
+            publicada_em=vaga["publicada_em"],
+            regime=vaga["regime"],
+            aceite=decisao["aceite"],
+            motivo_filtro=decisao["motivo"],
+        )
+
+        if decisao["aceite"]:
+            aceites += 1
+
+    print(f"ITJobs: {len(vagas)} vagas recolhidas, {aceites} aceites, todas guardadas na base de dados.")
 
 
 if __name__ == "__main__":

@@ -66,8 +66,21 @@ CREATE TABLE IF NOT EXISTS vagas (
     descricao         TEXT,
     -- de onde veio a vaga (por exemplo, 'manual' ou o nome da fonte)
     fonte             TEXT,
-    encontrada_em     TIMESTAMPTZ NOT NULL DEFAULT now()
+    encontrada_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- data do anúncio, tal como vem da fonte
+    publicada_em      TIMESTAMP,
+    -- presencial, hibrido ou remoto
+    regime            TEXT,
+    -- decisão do filtro de preferências (NULL = ainda não foi filtrada)
+    aceite            BOOLEAN,
+    motivo_filtro     TEXT
 );
+
+-- para uma base de dados que já existia sem estas colunas (não apaga dados)
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS publicada_em TIMESTAMP;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS regime TEXT;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS aceite BOOLEAN;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS motivo_filtro TEXT;
 
 
 -- O que o agente produz sobre uma vaga. Uma vaga pode ter várias análises,
