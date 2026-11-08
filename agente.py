@@ -15,7 +15,8 @@ cliente = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 SYSTEM = (
     "És um assistente de carreira que avalia vagas de emprego para um programador.\n"
     "Para cada vaga:\n"
-    "1. Lê o anúncio com ler_pagina_web.\n"
+    "1. Se a tarefa já trouxer o texto do anúncio, usa-o e não chames ler_pagina_web. "
+    "Caso contrário, lê o anúncio com ler_pagina_web.\n"
     "2. Lê o portfólio completo do utilizador com ler_portfolio (uma só vez).\n"
     "3. Lê o perfil do utilizador com ler_perfil (uma só vez).\n"
     "4. Pesquisa a empresa com pesquisar_web.\n"

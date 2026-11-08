@@ -7,6 +7,8 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 ITJOBS_API_KEY = os.environ.get("ITJOBS_API_KEY")
 
+GITHUB_UTILIZADOR = "RubenSilva13"
+
 BD_UTILIZADOR = "agente"
 BD_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
 BD_NOME = "job_search"

@@ -12,7 +12,8 @@ def normalizar(texto):
 PALAVRAS_SENIOR = ["senior", "sr", "lead", "leader", "principal", "head", "mid", "pleno", "architect"]
 
 # funções que não são técnicas (gestão, vendas, recrutamento): não estão ligadas à licenciatura
-PALAVRAS_EXCLUIDAS = ["manager", "pmo", "sales", "venda", "vendas", "recrutamento", "recruiter", "formador", "formadores"]
+PALAVRAS_EXCLUIDAS = ["manager", "pmo", "sales", "venda", "vendas", "recrutamento", "recruiter", "formador", "formadores",
+                      "call center", "atendimento", "apoio ao cliente"]
 PALAVRAS_JUNIOR = ["junior", "jr", "trainee", "estagio", "estagiario", "intern", "internship", "entry level", "entry-level"]
 
 

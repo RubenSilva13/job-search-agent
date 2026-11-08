@@ -195,6 +195,21 @@ def guardar_analise(vaga_id, relatorio):
     return analise_id
 
 
+def vagas_por_analisar(limite):
+    """Devolve as vagas aceites que ainda nao tem analise, das mais recentes para as mais antigas"""
+    with abrir_ligacao() as ligacao:
+        with ligacao.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                "SELECT id, titulo, empresa, url, localizacao, descricao FROM vagas "
+                "WHERE aceite AND NOT EXISTS (SELECT 1 FROM analises WHERE analises.vaga_id = vagas.id) "
+                "ORDER BY publicada_em DESC "
+                "LIMIT %s",
+                (limite,),
+            )
+            return cursor.fetchall()
+
+
+
 if __name__ == "__main__":
     carregar_perfil_ficheiro()
     print("Perfil carregado na base de dados.")
