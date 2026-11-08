@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from base_de_dados import guardar_vaga, ler_perfil_da_base
+from psycopg.rows import dict_row
+from base_de_dados import abrir_ligacao, guardar_vaga, ler_perfil_da_base
 from config import ITJOBS_API_KEY
 from filtro import filtrar_vaga
 
@@ -93,6 +94,43 @@ def recolher_e_guardar(limite=100):
             aceites += 1
 
     print(f"ITJobs: {len(vagas)} vagas recolhidas, {aceites} aceites, todas guardadas na base de dados.")
+
+
+def refiltrar_vagas():
+    """Volta a aplicar o filtro a todas as vagas guardadas. Usa-se quando as regras do filtro mudam."""
+    perfil = ler_perfil_da_base()
+    if perfil is None:
+        print("O perfil ainda não foi carregado. Corre 'python base_de_dados.py'.")
+        return
+
+    preferencias = perfil["preferencias"]
+    aceites_antes = 0
+    aceites_depois = 0
+
+    with abrir_ligacao() as ligacao:
+        with ligacao.cursor(row_factory=dict_row) as cursor:
+            cursor.execute("SELECT id, titulo, localizacao, regime, descricao, aceite FROM vagas")
+            guardadas = cursor.fetchall()
+
+            for guardada in guardadas:
+                # reconstrói a vaga no formato que o filtro espera
+                vaga = {
+                    "titulo": guardada["titulo"],
+                    "localizacoes": guardada["localizacao"].split(", ") if guardada["localizacao"] else [],
+                    "regime": guardada["regime"],
+                    "descricao": guardada["descricao"],
+                }
+                decisao = filtrar_vaga(vaga, preferencias)
+
+                cursor.execute(
+                    "UPDATE vagas SET aceite = %s, motivo_filtro = %s WHERE id = %s",
+                    (decisao["aceite"], decisao["motivo"], guardada["id"]),
+                )
+
+                aceites_antes += bool(guardada["aceite"])
+                aceites_depois += decisao["aceite"]
+
+    print(f"Filtro reaplicado a {len(guardadas)} vagas: aceites {aceites_antes} -> {aceites_depois}.")
 
 
 if __name__ == "__main__":

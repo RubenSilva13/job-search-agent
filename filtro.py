@@ -16,8 +16,37 @@ PALAVRAS_EXCLUIDAS = ["manager", "pmo", "sales", "venda", "vendas", "recrutament
                       "call center", "atendimento", "apoio ao cliente"]
 PALAVRAS_JUNIOR = ["junior", "jr", "trainee", "estagio", "estagiario", "intern", "internship", "entry level", "entry-level"]
 
+PADRAO_ANOS = re.compile(
+    r"(?P<antes>.{0,15}?)\b(?P<minimo>\d{1,2})\s*(?:(?:-|–|to|a|and|e)\s*\d{1,2})?\s*\+?\s*(?:years?|anos?)\b",
+    re.IGNORECASE | re.DOTALL,
+)
+
+EXPRESSOES_IGNORADAS = ["mais de", "over", "more than", "since", "desde"]
+
+ANOS_MAXIMOS = 2        #
+
+
+
+def anos_exigidos(vaga):
+    """Devolve o maior numero de anos de experiencia pedido na descriçao, ou 0 se nao pedir nenhuma"""
+    texto = vaga["descricao"] or ""
+    maximo = 0
+
+    for encontrado in PADRAO_ANOS.finditer(texto):
+        antes = normalizar(encontrado.group("antes"))
+
+        if any(ignorada in antes for ignorada in EXPRESSOES_IGNORADAS):
+            continue
+
+        anos = int(encontrado.group("minimo"))
+        maximo = max(maximo, anos)
+
+    return maximo
+       
+
 
 def tem_palavra(texto, palavras):
+
     """Diz se alguma das palavras aparece no texto como palavra inteira."""
     for palavra in palavras:
         if re.search(rf"\b{palavra}\b", texto):
@@ -79,6 +108,12 @@ def filtrar_vaga(vaga, preferencias):
     excluida = palavra_excluida(vaga)
     if excluida is not None:
         return {"aceite": False, "motivo": f"função fora da área ('{excluida}')", "prioridade": None}
+
+    # um título que diz "júnior" é de confiança; nos outros, olha-se para os anos pedidos
+    if senioridade != "junior":
+        anos = anos_exigidos(vaga)
+        if anos > ANOS_MAXIMOS:
+            return {"aceite": False, "motivo": f"pede {anos} anos de experiência", "prioridade": None}
 
     aceite, motivo, prioridade = avaliar_localizacao(vaga, preferencias)
     if not aceite:
