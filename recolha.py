@@ -1,4 +1,5 @@
 import requests
+import time
 from bs4 import BeautifulSoup
 from psycopg.rows import dict_row
 from base_de_dados import abrir_ligacao, guardar_vaga, ler_perfil_da_base
@@ -28,19 +29,19 @@ def recolher_itjobs(limite=100):
         "limit": limite,
     }
 
-    try:
-        resposta = requests.get(URL_ITJOBS, params=parametros, headers=CABECALHOS, timeout=15)
-    except requests.RequestException as erro:
-        # não imprimir o erro: pode conter o endereço com a chave
-        print(f"ITJobs: não foi possível ligar ({type(erro).__name__}).")
+    resposta = pedir_com_repeticao(URL_ITJOBS, parametros)
+    if resposta is None:
+        print("ITJobs: todas as tentativas falharam, não foi possível recolher vagas.")
         return []
 
-    if resposta.status_code != 200:
-        print(f"ITJobs: a API respondeu com o código {resposta.status_code}.")
+    dados = resposta.json()
+    if "error" in dados:
+        print(f"ITJobs: a API recusou o pedido ({dados['error'].get('message')}).")
         return []
 
     vagas = []
-    for item in resposta.json()["results"]:
+    for item in dados["results"]:
+
         locais = [local["name"] for local in item.get("locations", [])]
 
         vagas.append({
@@ -133,6 +134,30 @@ def refiltrar_vagas():
     print(f"Filtro reaplicado a {len(guardadas)} vagas: aceites {aceites_antes} -> {aceites_depois}.")
 
 
+
+PAUSA_SEGUNDOS = 5
+TENTATIVAS = 3
+
+def pedir_com_repeticao(url, parametros):
+    """Faz o pedido ate TENTATIVAS vezes. Devolve a resposta, ou None se todas falharem."""
+
+    for tentativa in range(1, TENTATIVAS +1):
+        try:
+            resposta = requests.get(url, params=parametros, headers=CABECALHOS, timeout=15)
+        except requests.RequestException as erro:
+            print(f"ITJobs: tentativa {tentativa}/{TENTATIVAS} falhou ({type(erro).__name__}).")
+        else:
+            if resposta.status_code == 200:
+                return resposta
+            print(f"ITJobs: tentativa {tentativa}/{TENTATIVAS} falhou (código {resposta.status_code}).")
+
+        if tentativa < TENTATIVAS:
+            time.sleep(PAUSA_SEGUNDOS)
+            
+
+    return None
+
+
 if __name__ == "__main__":
     vagas = recolher_itjobs(5)
     for vaga in vagas:
@@ -140,3 +165,4 @@ if __name__ == "__main__":
         print(f"  {vaga['url']}")
         print(f"  locais: {vaga['localizacoes']} | regime: {vaga['regime']} | "
               f"publicada: {vaga['publicada_em']} | descrição: {len(vaga['descricao'])} caracteres")
+
