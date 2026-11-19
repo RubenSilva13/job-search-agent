@@ -17,6 +17,12 @@ BD_PORTA = 5432
 
 MODELO = "claude-haiku-5-5"
 
+PRECOS = {
+    "claude-haiku-5-5": (0.10, 0.50),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-opus-5-5": (4.00, 20.00),
+}
+
 MAX_PASSOS = 10
 MAX_TOKENS = 8000
 

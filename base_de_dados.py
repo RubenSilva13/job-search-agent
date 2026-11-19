@@ -2,7 +2,7 @@ import json
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
-from config import BD_UTILIZADOR, BD_PASSWORD, BD_NOME, BD_SERVIDOR, BD_PORTA
+from config import BD_UTILIZADOR, BD_PASSWORD, BD_NOME, BD_SERVIDOR, BD_PORTA, PRECOS
 
 
 def abrir_ligacao():
@@ -208,6 +208,51 @@ def vagas_por_analisar(limite):
             )
             return cursor.fetchall()
 
+
+
+def calcular_custo(modelo, tokens_entrada, tokens_saida):
+    """Devolve o custo estimado em dólares, ou None se não houver preço para o modelo."""
+    precos = PRECOS.get(modelo)
+    if precos is None:
+        return None
+
+    preco_entrada, preco_saida = precos
+    return (tokens_entrada * preco_entrada + tokens_saida * preco_saida) / 1_000_000
+
+
+def registar_execucao(modelo, resultado, duracao_ms, passos, vaga_id=None):
+    """Guarda uma execução do agente e os seus passos. Devolve o id da execução.
+
+    Cada passo é um dicionário com: tipo ('modelo' ou 'ferramenta'), nome, duracao_ms,
+    tokens_entrada, tokens_saida e erro. Os campos que não se aplicam podem faltar.
+    """
+    chamadas_ao_modelo = [passo for passo in passos if passo["tipo"] == "modelo"]
+    tokens_entrada = sum(passo.get("tokens_entrada") or 0 for passo in chamadas_ao_modelo)
+    tokens_saida = sum(passo.get("tokens_saida") or 0 for passo in chamadas_ao_modelo)
+    custo = calcular_custo(modelo, tokens_entrada, tokens_saida)
+
+    with abrir_ligacao() as ligacao:
+        with ligacao.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO execucoes (vaga_id, modelo, duracao_ms, passos, "
+                "tokens_entrada, tokens_saida, custo_estimado, resultado) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+                "RETURNING id",
+                (vaga_id, modelo, duracao_ms, len(chamadas_ao_modelo),
+                 tokens_entrada, tokens_saida, custo, resultado),
+            )
+            execucao_id = cursor.fetchone()[0]
+
+            for numero, passo in enumerate(passos, start=1):
+                cursor.execute(
+                    "INSERT INTO passos (execucao_id, numero, tipo, nome, duracao_ms, "
+                    "tokens_entrada, tokens_saida, erro) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (execucao_id, numero, passo["tipo"], passo.get("nome"), passo.get("duracao_ms"),
+                     passo.get("tokens_entrada"), passo.get("tokens_saida"), passo.get("erro")),
+                )
+
+    return execucao_id
 
 
 if __name__ == "__main__":
