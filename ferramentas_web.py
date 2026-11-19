@@ -1,6 +1,10 @@
 import requests
+import time
 from bs4 import BeautifulSoup
 from ddgs import DDGS
+
+PESQUISA_TENTATIVAS = 3
+PESQUISA_PAUSA_SEGUNDOS = 3
 
 def ler_pagina_web(url):
     if not url.startswith("http://") and not url.startswith ("https://"):
@@ -65,13 +69,27 @@ def ler_pagina_web(url):
 
 
 def pesquisar_web(consulta):
-    try:
-        resultados = DDGS().text(consulta, max_results=5)
-    except Exception as erro:
-        return f"Erro na pesquisa {erro}."
-    if not resultados:
-        return f"A pesquisa por '{consulta}' nao devolveu resultados."
 
+    resultados = None
+    ultimo_erro= None
+
+    for tentativa in range(1, PESQUISA_TENTATIVAS + 1):
+        try:
+            resultados = DDGS().text(consulta, max_results=5)
+            break
+        except Exception as erro:
+            ultimo_erro = erro
+            if tentativa < PESQUISA_TENTATIVAS:
+                time.sleep(PESQUISA_PAUSA_SEGUNDOS)
+            
+
+    if resultados is None:
+        return f"Erro na pesquisa depois de {PESQUISA_TENTATIVAS} tentativas: ({type(ultimo_erro).__name__})"
+
+
+    if not resultados:
+        return f"A pesquisa por '{consulta}' não devolveu resultados. Pode ser que não haja informação online sobre isso."
+    
     blocos = []
     for resultado in resultados:
         titulo = resultado["title"]
