@@ -2,7 +2,7 @@ from agente import correr_agente, guardar_relatorio
 from base_de_dados import vagas_por_analisar, guardar_analise
 from config import GITHUB_UTILIZADOR
 
-LIMITE_DIARIO = 5
+LIMITE_DIARIO = 10
 
 
 def montar_tarefa(vaga):

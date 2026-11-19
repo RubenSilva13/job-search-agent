@@ -108,3 +108,34 @@ CREATE TABLE IF NOT EXISTS candidaturas (
     data_candidatura  DATE,
     notas             TEXT
 );
+
+
+
+-- Uma linha por análise de uma vaga.
+CREATE TABLE IF NOT EXISTS execucoes (
+    id                INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    vaga_id           INTEGER REFERENCES vagas (id) ON DELETE SET NULL,
+    modelo            TEXT NOT NULL,
+    iniciada_em       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    duracao_ms        INTEGER,
+    passos            INTEGER,
+    tokens_entrada    INTEGER NOT NULL DEFAULT 0,
+    tokens_saida      INTEGER NOT NULL DEFAULT 0,
+    -- em dólares, calculado na altura da execução com o preço do modelo
+    custo_estimado    NUMERIC(10, 6),
+    resultado         TEXT NOT NULL CHECK (resultado IN ('ok', 'sem_relatorio', 'erro'))
+);
+
+
+-- Uma linha por chamada ao modelo ou por ferramenta usada, dentro de uma execução.
+CREATE TABLE IF NOT EXISTS passos (
+    id                INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    execucao_id       INTEGER NOT NULL REFERENCES execucoes (id) ON DELETE CASCADE,
+    numero            INTEGER NOT NULL,
+    tipo              TEXT NOT NULL CHECK (tipo IN ('modelo', 'ferramenta')),
+    nome              TEXT,
+    duracao_ms        INTEGER,
+    tokens_entrada    INTEGER,
+    tokens_saida      INTEGER,
+    erro              TEXT
+);
