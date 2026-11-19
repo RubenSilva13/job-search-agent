@@ -8,7 +8,7 @@ prepara tudo e eu decido.
 1. ✅ Ciclo do agente escrito à mão, com ferramentas do GitHub
 2. ✅ Ferramentas web (ler páginas, pesquisar), relatório estruturado com Pydantic, migração para a API do Claude
 3. ✅ Base de dados (PostgreSQL) com o meu perfil (CV, formação, línguas), vagas e candidaturas
-4. Recolha diária de vagas, agendada, a partir de fontes com acesso oficial (APIs ou RSS)
+4. ✅ Recolha de vagas a partir de fontes com acesso oficial (ITJobs), filtro pelas preferências e análise automática, com um só comando (python diario.py). Corre a pedido, não agendada
 5. Registo de cada passo do agente (traces) e dos custos
 6. Avaliação: um conjunto de vagas classificadas por mim, para medir as decisões do agente
 7. Frontend em React/Next.js: painel de vagas e candidaturas
@@ -16,7 +16,9 @@ prepara tudo e eu decido.
 
 ## Decisões já tomadas
 - O ciclo do agente é escrito à mão (sem LangChain) até à fase 2, para perceber como funciona.
-  Na fase 3 ou 4, migrar para o LangGraph, quando forem precisos estado persistente e aprovação humana.
+  Migrar para o LangGraph só se surgir um passo com aprovação humana ou estado persistente. Depois da
+  fase 6, refazer o mesmo agente em LangGraph e comparar as duas versões com as vagas classificadas.
+- O projeto corre a pedido (python diario.py). Não há agendamento: é um projeto de portfólio.
 - O modelo decide o que fazer; o código garante o que tem de acontecer sempre
   (por exemplo, ler o portfólio completo com ler_portfolio).
 - O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
@@ -26,6 +28,12 @@ prepara tudo e eu decido.
 - O perfil existe em dois sítios (perfil.json e base de dados). Edita-se o ficheiro e recarrega-se
   com python base_de_dados.py. Fica só a base de dados quando existir o frontend (fase 7).
 - O url da vaga é guardado como veio, com parâmetros de rastreio. A mesma vaga com outro link
-  pode entrar duas vezes. Limpar o url por fonte, na fase 4.
-- A tabela candidaturas e as preferências do perfil ainda não são usadas pelo agente.
+  pode entrar duas vezes. Fica por tratar.
+- A tabela candidaturas ainda não é usada. As preferências do perfil só são usadas pelo filtro,
+  não pelo agente na análise.
+- O significado do campo workModel do ITJobs (0, 1, 2) é uma hipótese por confirmar. Condiciona o
+  filtro de regime (presencial, remoto, híbrido).
+- O filtro de vagas é por palavras no título e por anos de experiência no texto. É uma heurística:
+  deixa passar vagas sénior que não o dizem, e pode recusar vagas boas.
+- A pesquisa web não repete em caso de falha de rede: a análise sai sem informação da empresa.
 - A extração de páginas web falha em sites que exigem login (LinkedIn) ou que usam JavaScript.

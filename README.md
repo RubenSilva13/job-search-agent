@@ -6,6 +6,10 @@ da vaga o utilizador cumpre, com a prova de cada um, um score de compatibilidade
 
 O agente nunca se candidata sozinho: prepara a análise e quem decide é o utilizador.
 
+Também faz uma varredura de vagas: com `python diario.py` recolhe as vagas mais recentes do ITJobs
+(API oficial), filtra-as pelas preferências do perfil (cidade, regime, nível júnior, área) e analisa
+as que passam, guardando tudo numa base de dados PostgreSQL.
+
 ## Como funciona
 
 O ciclo do agente está escrito à mão, sem LangChain nem outros frameworks de agentes, para se
@@ -55,8 +59,12 @@ config.py           chaves, modelo e limites
 ferramentas.py      ferramentas do GitHub e do perfil
 ferramentas_web.py  ler páginas e pesquisar na web
 modelos.py          Relatorio e Requisito (Pydantic, com validadores)
-base_de_dados.py    ligação ao PostgreSQL, carregar e ler o perfil
+base_de_dados.py    ligação ao PostgreSQL: perfil, vagas e análises
 schema.sql          tabelas da base de dados
+recolha.py          recolhe vagas do ITJobs, filtra-as e guarda-as
+filtro.py           decide se uma vaga serve (senioridade, anos pedidos, área, local e regime)
+analise_diaria.py   analisa com o agente as vagas aceites que ainda não têm análise
+diario.py           comando único: recolher, filtrar e analisar
 docker-compose.yml  PostgreSQL num contentor Docker
 perfil.json         perfil do utilizador, carregado para a base de dados
 ROADMAP.md          plano do projeto
@@ -78,9 +86,11 @@ Cria um ficheiro `.env` na raiz:
 ANTHROPIC_API_KEY=a-tua-chave
 GITHUB_TOKEN=opcional
 POSTGRES_PASSWORD=uma-palavra-passe-tua
+ITJOBS_API_KEY=a-tua-chave
 ```
 
-O `GITHUB_TOKEN` é opcional e só aumenta o limite de pedidos à API do GitHub.
+O `GITHUB_TOKEN` é opcional e só aumenta o limite de pedidos à API do GitHub. A chave do ITJobs
+pede-se em [itjobs.pt/api](https://itjobs.pt/api).
 
 Edita o `perfil.json` com os teus dados. Depois arranca a base de dados e carrega o perfil
 (só é preciso repetir o segundo comando quando alteras o `perfil.json`):
@@ -90,7 +100,13 @@ docker compose up -d
 python base_de_dados.py
 ```
 
-O nome de utilizador do GitHub indica-se na tarefa, como no exemplo abaixo. Para correr o agente:
+Para fazer a varredura de vagas (precisa do Docker aberto):
+
+```bash
+python diario.py
+```
+
+Para analisar uma vaga em concreto, o nome de utilizador do GitHub indica-se na tarefa:
 
 ```bash
 python agente.py
@@ -109,15 +125,17 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
 - O agente só conhece o que está no GitHub e no perfil guardado na base de dados. Não lê o CV.
 - O score varia entre execuções da mesma vaga, porque o modelo decide quais são os requisitos
   principais. Os estados de cada requisito são mais fiáveis do que o número.
-- Se a base de dados estiver desligada, o `ler_perfil` devolve um erro e o relatório sai sem o perfil.
+- Se a base de dados estiver desligada, o `diario.py` avisa e termina com código de erro.
+- A recolha só usa o ITJobs. O filtro é uma heurística (palavras no título e anos de experiência
+  pedidos no texto), por isso pode deixar passar vagas sénior ou recusar vagas boas.
+- O campo `workModel` do ITJobs (0, 1, 2) foi interpretado como presencial, remoto e híbrido, mas
+  isso não está confirmado pela fonte.
 
 ## Estado e próximos passos
 
 Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatório estruturado com
-Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil do
-utilizador, lido pelo agente.
+Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil, as
+vagas e as análises, e a recolha, filtro e análise de vagas do ITJobs com um só comando.
 
-Em curso: guardar na base de dados as vagas e os relatórios (hoje os relatórios ficam em JSON).
-
-Planeado (ver [ROADMAP.md](ROADMAP.md)): recolha diária de vagas, registo dos passos e custos,
-avaliação com vagas classificadas à mão, frontend em React/Next.js, testes, CI e deploy.
+Planeado (ver [ROADMAP.md](ROADMAP.md)): registo dos passos e custos, avaliação com vagas
+classificadas à mão, frontend em React/Next.js, testes, CI e deploy.
