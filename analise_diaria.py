@@ -4,7 +4,6 @@ from config import GITHUB_UTILIZADOR
 
 LIMITE_DIARIO = 10
 
-
 def montar_tarefa(vaga):
     """Escreve a tarefa para o agente, ja com o texto do anuncio"""
     return (
@@ -23,7 +22,7 @@ def analisar_novas(limite=LIMITE_DIARIO):
         print(f"\n === {vaga['titulo']} -- {vaga['empresa']} ===")
 
         try:
-            relatorio = correr_agente(montar_tarefa(vaga))
+            relatorio = correr_agente(montar_tarefa(vaga), vaga["id"])
         except Exception as erro:
             print(f"Falhou ({type(erro).__name__}), passo à seguinte.")
             continue
