@@ -10,6 +10,7 @@ def montar_tarefa(vaga):
         f"Analisa esta vaga para o utilizador do GitHub {GITHUB_UTILIZADOR}.\n"
         f"Link: {vaga['url']}\n"
         f"Titulo: {vaga['titulo']} | Empresa: {vaga['empresa']}\n"
+        f"Local: {vaga['localizacao'] or 'nao indicado'} | Regime (indicado pela fonte): {vaga['regime'] or 'nao indicado'}\n"
         f"Descricao: {vaga['descricao']}\n"
     )
 
@@ -31,7 +32,7 @@ def analisar_novas(limite=LIMITE_DIARIO):
             print("O agente nao entregou um relatorio valido.")
             continue
 
-        guardar_relatorio(relatorio)
+        guardar_relatorio(relatorio, vaga["url"])
         guardar_analise(vaga["id"], relatorio)
         print(f"Analise guardada com score {relatorio.score}.")
 

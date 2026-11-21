@@ -200,7 +200,7 @@ def vagas_por_analisar(limite):
     with abrir_ligacao() as ligacao:
         with ligacao.cursor(row_factory=dict_row) as cursor:
             cursor.execute(
-                "SELECT id, titulo, empresa, url, localizacao, descricao FROM vagas "
+                "SELECT id, titulo, empresa, url, localizacao, regime, descricao FROM vagas "
                 "WHERE aceite AND NOT EXISTS (SELECT 1 FROM analises WHERE analises.vaga_id = vagas.id) "
                 "ORDER BY publicada_em DESC "
                 "LIMIT %s",

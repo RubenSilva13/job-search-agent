@@ -17,7 +17,9 @@ SYSTEM = (
     "És um assistente de carreira que avalia vagas de emprego para um programador.\n"
     "Para cada vaga:\n"
     "1. Se a tarefa já trouxer o texto do anúncio, usa-o e não chames ler_pagina_web. "
-    "Caso contrário, lê o anúncio com ler_pagina_web.\n"
+    "Caso contrário, lê o anúncio com ler_pagina_web. "
+    "Se a tarefa indicar o local e o regime, são dados da fonte: usa-os na localização do relatório "
+    "e para avaliar requisitos de local ou de regime, e não digas que o anúncio não os indica.\n"
     "2. Lê o portfólio completo do utilizador com ler_portfolio (uma só vez).\n"
     "3. Lê o perfil do utilizador com ler_perfil (uma só vez).\n"
     "4. Pesquisa a empresa com pesquisar_web.\n"
@@ -198,23 +200,28 @@ def correr_agente(tarefa, vaga_id=None):
     return None  # nem no último passo conseguiu entregar um relatório válido
 
 
-def guardar_relatorio(relatorio):
-    """Guarda o relatório num ficheiro JSON na pasta relatorios/."""
+def guardar_relatorio(relatorio, url=None):
+    """Guarda o relatório num ficheiro JSON na pasta relatorios/, com o link da vaga."""
     os.makedirs("relatorios", exist_ok=True)
 
     data = datetime.now().strftime("%Y-%m-%d_%H-%M")
     nome_empresa = relatorio.empresa.replace(" ", "_")
     caminho = os.path.join("relatorios", f"{data}_{nome_empresa}.json")
 
+    # o link vem do código e não do modelo: é a chave da vaga, tem de ser exato
+    dados = {"url": url, **relatorio.model_dump()}
+
     with open(caminho, "w", encoding="utf-8") as ficheiro:
-        ficheiro.write(relatorio.model_dump_json(indent=2))
+        json.dump(dados, ficheiro, ensure_ascii=False, indent=2)
 
     return caminho
 
 
-def mostrar_relatorio(relatorio):
+def mostrar_relatorio(relatorio, url=None):
     print("\n" + "=" * 60)
     print(f"{relatorio.vaga} — {relatorio.empresa}")
+    if url:
+        print(f"Link: {url}")
     print(f"Score: {relatorio.score}/100")
     print("=" * 60)
 
@@ -270,7 +277,8 @@ if __name__ == "__main__":
     if relatorio is None:
         print("\n❌ O agente não conseguiu entregar um relatório válido.")
     else:
-        mostrar_relatorio(relatorio)
-        caminho = guardar_relatorio(relatorio)
+        url = extrair_url(tarefa)
+        mostrar_relatorio(relatorio, url)
+        caminho = guardar_relatorio(relatorio, url)
         print(f"\n💾 Guardado em {caminho}")
         guardar_na_base(relatorio, tarefa)
