@@ -1,3 +1,5 @@
+import sys
+import anthropic
 from agente import correr_agente, guardar_relatorio
 from base_de_dados import vagas_por_analisar, guardar_analise
 from config import GITHUB_UTILIZADOR
@@ -24,6 +26,10 @@ def analisar_novas(limite=LIMITE_DIARIO):
 
         try:
             relatorio = correr_agente(montar_tarefa(vaga), vaga["id"])
+        except anthropic.AuthenticationError:
+            # a chave foi recusada: vai falhar em todas as vagas, por isso pára-se já
+            print("\nA chave da API da Anthropic foi recusada. Verifica a ANTHROPIC_API_KEY no ficheiro .env.")
+            sys.exit(1)
         except Exception as erro:
             print(f"Falhou ({type(erro).__name__}), passo à seguinte.")
             continue
