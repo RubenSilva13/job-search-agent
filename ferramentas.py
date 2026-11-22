@@ -1,4 +1,5 @@
 import json
+import time
 import psycopg
 import requests
 from base_de_dados import ler_perfil_da_base
@@ -66,7 +67,17 @@ def ler_varios_readmes(utilizador, repositorios):
         blocos.append(f"----README de {repositorio} ----\n{texto}")
     return "\n\n".join(blocos)
 
+CACHE_PORTFOLIO = {}
+VALIDADE_CACHE_SEGUNDOS = 30 * 60
+
 def ler_portfolio(utilizador):
+    agora = time.time()
+
+    if utilizador in CACHE_PORTFOLIO:
+        momento, texto = CACHE_PORTFOLIO[utilizador]
+        if agora - momento < VALIDADE_CACHE_SEGUNDOS:
+            return texto
+        
     url =f"{URL_API}/users/{utilizador}/repos"
     parametros = {"per_page": 100, "sort": "updated"}
 
@@ -96,7 +107,9 @@ def ler_portfolio(utilizador):
         blocos.append(bloco)
     if not blocos:
         return "Este utilizador nao tem repositorios publicos."
-    return "\n\n".join(blocos)
+    texto = "\n\n".join(blocos)
+    CACHE_PORTFOLIO[utilizador] = (agora, texto)
+    return texto
 
 
 
