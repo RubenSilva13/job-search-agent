@@ -22,11 +22,12 @@ def html_para_texto(html):
     return soup.get_text(separator="\n", strip=True)
 
 
-def recolher_itjobs(limite=100):
+def recolher_itjobs(limite=100, pagina=1):
     """Pede ao ITJobs as vagas mais recentes e devolve-as numa lista de dicionários simples."""
     parametros = {
         "api_key": ITJOBS_API_KEY,
         "limit": limite,
+        "page": pagina,         # a página 1 tem as mais recentes, as seguintes as mais antigas
     }
 
     resposta = pedir_com_repeticao(URL_ITJOBS, parametros)
@@ -58,7 +59,7 @@ def recolher_itjobs(limite=100):
     return vagas
 
 
-def recolher_e_guardar(limite=100):
+def recolher_e_guardar(limite=100, pagina=1):
     """Recolhe as vagas, filtra-as pelas preferências e guarda todas na base de dados.
 
     Guarda também as recusadas, com o motivo, para não as voltar a tratar e para se poder rever o filtro.
@@ -69,7 +70,7 @@ def recolher_e_guardar(limite=100):
         return
 
     preferencias = perfil["preferencias"]
-    vagas = recolher_itjobs(limite)
+    vagas = recolher_itjobs(limite, pagina)
     if not vagas:
         print("Nenhuma vaga recolhida, nada foi guardado.")
         return
