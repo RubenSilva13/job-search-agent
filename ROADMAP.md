@@ -9,7 +9,7 @@ prepara tudo e eu decido.
 2. ✅ Ferramentas web (ler páginas, pesquisar), relatório estruturado com Pydantic, migração para a API do Claude
 3. ✅ Base de dados (PostgreSQL) com o meu perfil (CV, formação, línguas), vagas e candidaturas
 4. ✅ Recolha de vagas a partir de fontes com acesso oficial (ITJobs), filtro pelas preferências e análise automática, com um só comando (python diario.py). Corre a pedido, não agendada
-5. Registo de cada passo do agente (traces) e dos custos
+5. ✅ Registo de cada execução do agente (duração, tokens, custo e passos) na base de dados, e relatório de custos (python custos.py)
 6. Avaliação: um conjunto de vagas classificadas por mim, para medir as decisões do agente
 7. Frontend em React/Next.js: painel de vagas e candidaturas
 8. Testes, CI com GitHub Actions, Docker e deploy
@@ -21,6 +21,8 @@ prepara tudo e eu decido.
 - O projeto corre a pedido (python diario.py). Não há agendamento: é um projeto de portfólio.
 - O modelo decide o que fazer; o código garante o que tem de acontecer sempre
   (por exemplo, ler o portfólio completo com ler_portfolio).
+- Otimizar só depois de medir. A cache do portfólio e o limite de pesquisas por análise vieram do
+  custos.py, e a segunda só foi descoberta porque a primeira não encurtou o tempo total.
 - O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
 
 ## Problemas conhecidos
@@ -35,5 +37,12 @@ prepara tudo e eu decido.
   filtro de regime (presencial, remoto, híbrido).
 - O filtro de vagas é por palavras no título e por anos de experiência no texto. É uma heurística:
   deixa passar vagas sénior que não o dizem, e pode recusar vagas boas.
-- A pesquisa web não repete em caso de falha de rede: a análise sai sem informação da empresa.
+- A pesquisa web repete até 3 vezes se falhar. Se falhar sempre, a análise sai sem informação da
+  empresa, e o relatório diz que não foi possível confirmar.
+- O limite de uma pesquisa por análise é uma instrução no SYSTEM, não uma garantia do código. O
+  agente pode voltar a pesquisar mais vezes, e o custos.py mostra-o (cada chamada extra ao modelo
+  reenvia todo o histórico).
+- O filtro deixa passar vagas da área com pouca compatibilidade (scores de 13 a 25 são comuns).
+- O custo é uma estimativa: tokens devolvidos pela API vezes a tabela PRECOS do config.py, verificada
+  em 2026-11-03. Rever a tabela de vez em quando e conferir o total com a Console.
 - A extração de páginas web falha em sites que exigem login (LinkedIn) ou que usam JavaScript.

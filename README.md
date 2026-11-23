@@ -24,7 +24,11 @@ O modelo decide o que fazer; o código garante o que tem de acontecer sempre:
 - **Validação do relatório:** o relatório é um modelo Pydantic. Se o modelo entregar algo inválido
   (por exemplo, um requisito como "cumpre" sem evidência), o erro volta ao modelo para ele se corrigir.
 - **Limite de passos:** no último passo, o modelo é obrigado a entregar o relatório.
-- **Cache:** uma ferramenta chamada duas vezes com os mesmos argumentos não é executada outra vez.
+- **Cache:** uma ferramenta chamada duas vezes com os mesmos argumentos não é executada outra vez
+  na mesma análise. O portfólio do GitHub fica ainda guardado em memória durante 30 minutos, para
+  ser lido uma só vez por execução e não uma vez por vaga.
+- **Registo:** cada análise guarda na base de dados a duração, os tokens, o custo estimado e cada
+  passo (chamada ao modelo ou ferramenta), mesmo quando falha a meio.
 - **Sem exagerar:** só conta o que está escrito nos READMEs e no perfil. Cada requisito cumprido
   indica a origem da prova e respeita o nível indicado no perfil.
 
@@ -49,7 +53,33 @@ Cada requisito do anúncio recebe um estado:
 - ❔ `nao_confirmado`: algo que nem o GitHub nem o perfil mostram, como soft skills
 
 O relatório inclui ainda o score (0 a 100), um resumo da empresa e sugestões. Fica guardado em
-JSON na pasta `relatorios/`.
+JSON na pasta `relatorios/`, com o link da vaga.
+
+## Custos e tempos
+
+No fim de cada análise aparece uma linha, por exemplo:
+
+```
+📊 2 chamadas ao modelo, 22,500 tokens, ~$0.0042, 28 s (ok)
+```
+
+`python custos.py` junta tudo o que ficou registado: total e média por análise, custo por dia, as
+ferramentas mais lentas, onde vai o tempo e as análises mais caras. Com o `claude-haiku-5-5`, uma
+análise custa cerca de 0,4 cêntimos.
+
+As medições serviram para otimizar o agente (valores médios, em 3 a 6 análises por fase, por isso
+são indicativos e não uma experiência controlada):
+
+| | Ponto de partida | Cache do portfólio | Cache + uma pesquisa por análise |
+|---|---|---|---|
+| Leitura do portfólio | 10,7 s | 2,9 s | 2,9 s |
+| Chamadas ao modelo por análise | 2,0 | 3,3 | 2,0 |
+| Tempo total por análise | 37,3 s | 35,0 s | 27,9 s |
+| Custo médio por análise | 0,42 ¢ | 0,59 ¢ | 0,42 ¢ |
+
+A cache sozinha encurtou a leitura do portfólio mas não o tempo total: nessa fase o agente passou a
+fazer pesquisas a mais, e cada chamada extra ao modelo reenvia todo o histórico. O limite de uma
+pesquisa, escrito nas instruções do agente, corrigiu-o.
 
 ## Estrutura
 
@@ -65,6 +95,7 @@ recolha.py          recolhe vagas do ITJobs, filtra-as e guarda-as
 filtro.py           decide se uma vaga serve (senioridade, anos pedidos, área, local e regime)
 analise_diaria.py   analisa com o agente as vagas aceites que ainda não têm análise
 diario.py           comando único: recolher, filtrar e analisar
+custos.py           relatório de custos e tempos das análises (lê a base de dados)
 docker-compose.yml  PostgreSQL num contentor Docker
 perfil.json         perfil do utilizador, carregado para a base de dados
 ROADMAP.md          plano do projeto
@@ -106,6 +137,12 @@ Para fazer a varredura de vagas (precisa do Docker aberto):
 python diario.py
 ```
 
+Para ver quanto custaram e quanto demoraram as análises:
+
+```bash
+python custos.py
+```
+
 Para analisar uma vaga em concreto, o nome de utilizador do GitHub indica-se na tarefa:
 
 ```bash
@@ -130,12 +167,16 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
   pedidos no texto), por isso pode deixar passar vagas sénior ou recusar vagas boas.
 - O campo `workModel` do ITJobs (0, 1, 2) foi interpretado como presencial, remoto e híbrido, mas
   isso não está confirmado pela fonte.
+- O limite de uma pesquisa web por análise é uma instrução ao modelo, não uma garantia do código.
+- O custo é uma estimativa: tokens devolvidos pela API vezes a tabela de preços do `config.py`
+  (verificada em 2026-11-03), que convém rever de vez em quando.
 
 ## Estado e próximos passos
 
 Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatório estruturado com
 Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil, as
-vagas e as análises, e a recolha, filtro e análise de vagas do ITJobs com um só comando.
+vagas e as análises, a recolha, filtro e análise de vagas do ITJobs com um só comando, e o registo de
+duração, tokens e custo de cada análise.
 
-Planeado (ver [ROADMAP.md](ROADMAP.md)): registo dos passos e custos, avaliação com vagas
-classificadas à mão, frontend em React/Next.js, testes, CI e deploy.
+Planeado (ver [ROADMAP.md](ROADMAP.md)): avaliação com vagas classificadas à mão, frontend em
+React/Next.js, testes, CI e deploy.
