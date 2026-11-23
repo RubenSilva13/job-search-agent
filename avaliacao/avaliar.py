@@ -35,7 +35,18 @@ CAMINHO_ERROS = os.path.join(PASTA, "erros.jsonl")
 CAMINHO_RESUMO = os.path.join(PASTA, "resumo.md")
 
 VALOR_DA_NOTA = {"serve": 2, "talvez": 1, "nao": 0}
+VALOR_DA_COBERTURA = {"alta": 2, "media": 1, "baixa": 0}
 trinco = threading.Lock()
+
+
+def usar_conjunto(nome):
+    """Troca os ficheiros de trabalho: 'principal' (as 24 vagas) ou 'teste' (as 15 que o agente nunca viu)."""
+    global CAMINHO_NOTAS, CAMINHO_RESULTADOS, CAMINHO_ERROS, CAMINHO_RESUMO
+    if nome == "teste":
+        CAMINHO_NOTAS = os.path.join(PASTA, "notas_teste.csv")
+        CAMINHO_RESULTADOS = os.path.join(PASTA, "resultados_teste.jsonl")
+        CAMINHO_ERROS = os.path.join(PASTA, "erros_teste.jsonl")
+        CAMINHO_RESUMO = os.path.join(PASTA, "resumo_teste.md")
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +63,20 @@ def ler_notas():
                 raise ValueError(f"nota inválida na vaga {linha['id']}: '{linha['nota']}'")
             notas.append((int(linha["id"]), nota))
     return notas
+
+
+def ler_coberturas():
+    """A cobertura de cada vaga (alta, media, baixa), se o ficheiro de notas tiver essa coluna."""
+    coberturas = {}
+    with open(CAMINHO_NOTAS, encoding="utf-8-sig", newline="") as ficheiro:
+        for linha in csv.DictReader(ficheiro):
+            if "cobertura" not in linha:
+                return {}
+            valor = linha["cobertura"].strip().lower()
+            if valor not in VALOR_DA_COBERTURA:
+                raise ValueError(f"cobertura inválida na vaga {linha['id']}: '{linha['cobertura']}'")
+            coberturas[int(linha["id"])] = valor
+    return coberturas
 
 
 def ler_vagas(ids):
@@ -265,7 +290,30 @@ def resumo():
         saida.append(f"| {nome} | {len(scores)} | {formatar(media, 1)} |")
     saida.append("")
 
-    amplitudes = [max(s) - min(s) for s in por_vaga.values() if len(s) >= 2]
+    coberturas = ler_coberturas()
+    if coberturas:
+        casos_cobertura = [(VALOR_DA_COBERTURA[coberturas[i]], nomes[i]) for i in nomes]
+        saida.append("## O score concorda com a cobertura que estimaste?")
+        saida.append("")
+        saida.append("A cobertura é o que o score diz medir: quanto do que a vaga pede já está provado "
+                     "no GitHub e no perfil, sem contar o interesse.")
+        saida.append("")
+        saida.append("| Métrica | Valor | Intervalo de 95% |")
+        saida.append("|---|---|---|")
+        rho_c = spearman(casos_cobertura)
+        if rho_c is not None:
+            inferior, superior = intervalo(spearman, casos_cobertura)
+            saida.append(f"| Correlação de ordem com a cobertura | {formatar(rho_c)} | {formatar(inferior)} a {formatar(superior)} |")
+        saida.append("")
+        saida.append("| A tua cobertura | Vagas | Score médio do agente |")
+        saida.append("|---|---|---|")
+        for nome, valor in [("alta", 2), ("media", 1), ("baixa", 0)]:
+            scores = [score for cobertura, score in casos_cobertura if cobertura == valor]
+            media = sum(scores) / len(scores) if scores else None
+            saida.append(f"| {nome} | {len(scores)} | {formatar(media, 1)} |")
+        saida.append("")
+
+    amplitudes =[max(s) - min(s) for s in por_vaga.values() if len(s) >= 2]
     saida.append("## O score é estável?")
     saida.append("")
     if amplitudes:
@@ -301,7 +349,10 @@ if __name__ == "__main__":
     parser.add_argument("--so", type=int, default=0, help="só os primeiros N casos (piloto)")
     parser.add_argument("--trabalhadores", type=int, default=3, help="análises em paralelo")
     parser.add_argument("--resumo", action="store_true", help="só calcula as métricas")
+    parser.add_argument("--conjunto", choices=["principal", "teste"], default="principal",
+                        help="principal: as 24 vagas; teste: as 15 que o agente nunca viu")
     argumentos = parser.parse_args()
+    usar_conjunto(argumentos.conjunto)
 
     if argumentos.resumo:
         resumo()
