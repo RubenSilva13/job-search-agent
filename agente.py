@@ -6,7 +6,7 @@ from datetime import datetime
 import anthropic
 import psycopg
 from pydantic import ValidationError
-from base_de_dados import guardar_vaga, guardar_analise, registar_execucao
+from base_de_dados import guardar_vaga, guardar_analise, registar_execucao, calcular_custo
 from config import ANTHROPIC_API_KEY, MODELO, MAX_PASSOS, MAX_TOKENS
 from ferramentas import FERRAMENTAS, DESCRICOES
 from modelos import Relatorio
@@ -99,18 +99,27 @@ def pedir_ao_modelo(mensagens, forcar_relatorio):
     return resposta
 
 def registar_no_fim(resultado, inicio, passos_registados, vaga_id):
-    """Guarda na base de dados a execuçao que acabou. Se falhar, avisa."""
-    duracao_ms = int((time.perf_counter()- inicio  ) * 1000)
+    """Mostra o resumo da execução e guarda-a na base de dados. Se a base falhar, só avisa."""
+    duracao_ms = int((time.perf_counter() - inicio) * 1000)
+
+    chamadas_ao_modelo = [passo for passo in passos_registados if passo["tipo"] == "modelo"]
+    tokens_entrada = sum(passo["tokens_entrada"] for passo in chamadas_ao_modelo)
+    tokens_saida = sum(passo["tokens_saida"] for passo in chamadas_ao_modelo)
+    custo = calcular_custo(MODELO, tokens_entrada, tokens_saida)
+    custo_texto = f"~${custo:.4f}" if custo is not None else "custo desconhecido"
+
+    # o resumo aparece mesmo que a base de dados esteja parada
+    print(f"📊 {len(chamadas_ao_modelo)} chamadas ao modelo, {tokens_entrada + tokens_saida:,} tokens, "
+          f"{custo_texto}, {duracao_ms / 1000:.0f} s ({resultado})")
 
     try:
         registar_execucao(MODELO, resultado, duracao_ms, passos_registados, vaga_id)
     except psycopg.Error as erro:
-        print(f"Nao foi possisvel registar a execuçao ({type(erro).__name__}).")
+        print(f"Não foi possível registar a execução ({type(erro).__name__}).")
 
-def correr_agente(tarefa, vaga_id=None):
-    passos_registados = []
-    inicio = time.perf_counter()
 
+def ciclo_do_agente(tarefa, passos_registados):
+    """O ciclo do agente. Escreve no caderno (passos_registados) o que mede; quem o guarda é o correr_agente."""
     mensagens = [
         {"role": "user", "content": tarefa},
     ]
@@ -160,8 +169,7 @@ def correr_agente(tarefa, vaga_id=None):
                 relatorio, erro = validar_relatorio(argumentos)
 
                 if relatorio is not None:
-                    registar_no_fim("ok", inicio, passos_registados, vaga_id)
-                    return relatorio 
+                    return relatorio  # relatório válido: o ciclo termina aqui 
 
                 print(f"   ↳ ❌ Relatório recusado: {erro[:300]}")
                 resultado = erro
@@ -197,8 +205,22 @@ def correr_agente(tarefa, vaga_id=None):
         # todos os resultados deste passo vão juntos, numa só mensagem do utilizador
         mensagens.append({"role": "user", "content": resultados})
     
-    registar_no_fim("sem_relatorio", inicio, passos_registados, vaga_id)
     return None  # nem no último passo conseguiu entregar um relatório válido
+
+
+def correr_agente(tarefa, vaga_id=None):
+    """Corre o agente e regista a execução, aconteça o que acontecer."""
+    passos_registados = []
+    inicio = time.perf_counter()
+    resultado_final = "erro"            # só muda se o ciclo terminar sem exceção
+
+    try:
+        relatorio = ciclo_do_agente(tarefa, passos_registados)
+        resultado_final = "ok" if relatorio is not None else "sem_relatorio"
+        return relatorio
+    finally:
+        # corre sempre: com relatório, sem relatório, ou com uma exceção a meio do ciclo
+        registar_no_fim(resultado_final, inicio, passos_registados, vaga_id)
 
 
 def guardar_relatorio(relatorio, url=None):
