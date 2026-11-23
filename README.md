@@ -86,6 +86,52 @@ A cache sozinha encurtou a leitura do portfólio mas não o tempo total: nessa f
 fazer pesquisas a mais, e cada chamada extra ao modelo reenvia todo o histórico. O limite de uma
 pesquisa, escrito nas instruções do agente, corrigiu-o.
 
+## Avaliação
+
+Para saber se o score serve, classifiquei vagas à mão e comparei com o que o agente diz.
+
+- Classifiquei cada vaga **sem ver o score**: `serve`, `talvez` ou `nao` (candidatava-me?). No
+  conjunto de teste, também a `cobertura` (`alta`, `media`, `baixa`): quanto do que a vaga pede já
+  está provado no GitHub e no perfil, sem contar o interesse.
+- Cada vaga foi analisada **3 vezes**, para medir também a estabilidade.
+- Dois conjuntos: 24 vagas para desenvolver, e 15 vagas **que nem o agente nem eu tínhamos visto**,
+  usadas uma só vez e sem mexer no agente depois de as classificar.
+
+| | 24 vagas (desenvolvimento) | 15 vagas (teste) |
+|---|---|---|
+| Análises | 72 | 45 |
+| Correlação com o meu interesse | 0,55 (0,18 a 0,82) | 0,53 (0,00 a 0,82) |
+| Correlação com a cobertura | | 0,49 (−0,07 a 0,84) |
+| Separação serve / nao | 0,87 (0,60 a 1,00) | 1,00 (12 pares em 12) |
+| Score médio serve / talvez / nao | 50 / 35 / 17 | 55 / 36 / 33 |
+| Oscilação média entre repetições | 12,9 pontos | 8,1 pontos |
+
+Entre parênteses, os intervalos de 95%. O primeiro conjunto avaliou o score escrito pelo modelo. Foi
+com esses resultados que o score passou a ser calculado em código, e o conjunto de teste avalia essa
+versão.
+
+**O que mostra**
+- O score ordena as vagas de forma coerente com o meu julgamento nos dois conjuntos. No teste,
+  todas as vagas `serve` ficaram acima de todas as `nao`; se os scores fossem ao acaso, isso
+  aconteceria cerca de 3% das vezes.
+- Calcular o score em código baixou a oscilação de 12,9 para 8,1 pontos. Nos relatórios antigos, o
+  modelo nem sempre seguia a sua própria regra de cálculo.
+
+**O que não mostra**
+- Os intervalos das correlações tocam o zero: com 15 vagas não se pode afirmar que a correlação é
+  diferente de zero, só que a direção é positiva nos dois conjuntos.
+- O agente não distingue `talvez` de `nao` no teste (36 contra 33). Encontra as boas, não as
+  intermédias.
+- O que ainda oscila é a classificação dos requisitos (`falta` contra `nao_confirmado`). Com poucos
+  requisitos contáveis, um só que mude de categoria move o score 17 a 33 pontos.
+- O score mede a cobertura comprovada, e não o interesse. Marco `serve` em vagas em que teria de
+  aprender o que falta, e o agente vê isso como `falta`. Neste conjunto as minhas duas notas
+  correlacionam-se 0,70, por isso não se conseguiu separar o que o score acompanha melhor.
+- Um só avaliador, e poucas vagas. Os resultados indicam uma direção e não são uma prova.
+
+O método, os ficheiros e as regras para repetir a avaliação estão em
+[avaliacao/README.md](avaliacao/README.md).
+
 ## Estrutura
 
 ```
@@ -101,6 +147,7 @@ filtro.py           decide se uma vaga serve (senioridade, anos pedidos, área, 
 analise_diaria.py   analisa com o agente as vagas aceites que ainda não têm análise
 diario.py           comando único: recolher, filtrar e analisar
 custos.py           relatório de custos e tempos das análises (lê a base de dados)
+avaliacao/          avaliação do score contra vagas classificadas à mão (tem o seu README)
 docker-compose.yml  PostgreSQL num contentor Docker
 perfil.json         perfil do utilizador, carregado para a base de dados
 ROADMAP.md          plano do projeto
@@ -165,8 +212,9 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
 - Páginas que exigem login (como o LinkedIn) ou que carregam o conteúdo com JavaScript não são
   lidas. Funciona melhor com anúncios em sites de empresas e plataformas abertas.
 - O agente só conhece o que está no GitHub e no perfil guardado na base de dados. Não lê o CV.
-- O score varia entre execuções da mesma vaga, porque o modelo decide quais são os requisitos
-  principais. Os estados de cada requisito são mais fiáveis do que o número.
+- O score é calculado em código, mas os estados dos requisitos ainda variam entre execuções: a
+  oscilação média é de cerca de 8 pontos, e pode passar de 30 em vagas com poucos requisitos
+  contáveis. Ver a secção Avaliação.
 - Se a base de dados estiver desligada, o `diario.py` avisa e termina com código de erro.
 - A recolha só usa o ITJobs. O filtro é uma heurística (palavras no título e anos de experiência
   pedidos no texto), por isso pode deixar passar vagas sénior ou recusar vagas boas.
@@ -181,7 +229,6 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
 Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatório estruturado com
 Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil, as
 vagas e as análises, a recolha, filtro e análise de vagas do ITJobs com um só comando, e o registo de
-duração, tokens e custo de cada análise.
+duração, tokens e custo de cada análise, e a avaliação do score contra vagas classificadas à mão.
 
-Planeado (ver [ROADMAP.md](ROADMAP.md)): avaliação com vagas classificadas à mão, frontend em
-React/Next.js, testes, CI e deploy.
+Planeado (ver [ROADMAP.md](ROADMAP.md)): frontend em React/Next.js, testes, CI e deploy.

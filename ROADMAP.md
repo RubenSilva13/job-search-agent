@@ -10,7 +10,7 @@ prepara tudo e eu decido.
 3. ✅ Base de dados (PostgreSQL) com o meu perfil (CV, formação, línguas), vagas e candidaturas
 4. ✅ Recolha de vagas a partir de fontes com acesso oficial (ITJobs), filtro pelas preferências e análise automática, com um só comando (python diario.py). Corre a pedido, não agendada
 5. ✅ Registo de cada execução do agente (duração, tokens, custo e passos) na base de dados, e relatório de custos (python custos.py)
-6. Avaliação: um conjunto de vagas classificadas por mim, para medir as decisões do agente
+6. ✅ Avaliação: vagas classificadas por mim (24 de desenvolvimento e 15 de teste, nunca vistas), com o score comparado com as minhas notas e a estabilidade medida em 3 repetições (ver avaliacao/)
 7. Frontend em React/Next.js: painel de vagas e candidaturas
 8. Testes, CI com GitHub Actions, Docker e deploy
 
@@ -23,10 +23,28 @@ prepara tudo e eu decido.
   (por exemplo, ler o portfólio completo com ler_portfolio).
 - Otimizar só depois de medir. A cache do portfólio e o limite de pesquisas por análise vieram do
   custos.py, e a segunda só foi descoberta porque a primeira não encurtou o tempo total.
+- O score é calculado em código a partir dos estados dos requisitos, e não escrito pelo modelo. A
+  avaliação mostrou que o modelo nem sempre seguia a sua própria regra, e a oscilação desceu de 12,9
+  para 8,1 pontos.
+- Classifico as vagas sem ver o score do agente. O conjunto de teste usa-se uma só vez, com vagas
+  que o agente nunca analisou, e fica "queimado" depois de ver o resultado: uma melhoria nova
+  confirma-se com vagas novas.
 - O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
 
 ## Problemas conhecidos
-- O score varia entre execuções da mesma vaga. Mede-se na fase 6.
+- O score ainda oscila entre execuções da mesma vaga (8,1 pontos em média no teste, 33 no pior caso).
+  O que varia é a classificação dos requisitos (falta contra nao_confirmado), e com poucos
+  requisitos contáveis um só que mude move o score 17 a 33 pontos.
+- O agente não distingue talvez de nao (score médio 36 contra 33 no teste). Encontra as vagas boas,
+  não as intermédias.
+- O score mede a cobertura comprovada, e não o meu interesse: marco serve em vagas em que aprenderia
+  o que falta, e o agente vê isso como falta. As minhas duas notas correlacionam-se 0,70 no teste,
+  por isso a avaliação não separa bem as duas coisas.
+- A avaliação tem um só avaliador e poucas vagas: os intervalos de confiança são largos e os das
+  correlações tocam o zero. Indica uma direção, não é uma prova.
+- Ideias por confirmar em vagas novas: afinar a regra falta contra nao_confirmado, mostrar o número
+  de requisitos contáveis ao lado do score, e devolver dois números (cobertura e ajuste ao que
+  procuro).
 - O perfil existe em dois sítios (perfil.json e base de dados). Edita-se o ficheiro e recarrega-se
   com python base_de_dados.py. Fica só a base de dados quando existir o frontend (fase 7).
 - O url da vaga é guardado como veio, com parâmetros de rastreio. A mesma vaga com outro link
