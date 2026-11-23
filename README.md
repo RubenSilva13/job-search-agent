@@ -55,6 +55,11 @@ Cada requisito do anúncio recebe um estado:
 O relatório inclui ainda o score (0 a 100), um resumo da empresa e sugestões. Fica guardado em
 JSON na pasta `relatorios/`, com o link da vaga.
 
+O score é calculado em código a partir dos estados, e não escrito pelo modelo: a percentagem dos
+requisitos técnicos cumpridos, em que um requisito `parcial` vale metade e os `nao_confirmado` não
+contam. Mede quanto do que o anúncio pede está provado no GitHub e no perfil. Não mede o interesse
+da vaga nem a vontade de aprender o que falta.
+
 ## Custos e tempos
 
 No fim de cada análise aparece uma linha, por exemplo:
