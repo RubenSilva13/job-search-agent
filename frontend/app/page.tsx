@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ESTADOS, textoDoEstado } from "./estados";
+import Etiqueta from "./Etiqueta";
+import Score from "./Score";
 
 // A forma de cada vaga que a API devolve em GET /vagas.
 // Os nomes têm de ser iguais aos do JSON (os campos do SELECT no api.py).
@@ -46,12 +48,7 @@ export default async function PaginaVagas({
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <div className="mb-4 flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">Vagas analisadas</h1>
-        <Link href="/custos" className="text-sm underline">
-          Custos
-        </Link>
-      </div>
+      <h1 className="mb-4 text-2xl font-semibold">Vagas analisadas</h1>
 
       <nav className="mb-6 flex flex-wrap gap-2">
         {FILTROS.map((opcao) => {
@@ -62,8 +59,8 @@ export default async function PaginaVagas({
               href={opcao.valor === "" ? "/" : `/?estado=${opcao.valor}`}
               className={`rounded-full border px-3 py-1 text-sm ${
                 ativo
-                  ? "border-transparent bg-foreground text-background"
-                  : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                  ? "border-transparent bg-destaque text-background"
+                  : "border-borda bg-superficie text-suave hover:text-foreground"
               }`}
             >
               {opcao.texto}
@@ -72,30 +69,46 @@ export default async function PaginaVagas({
         })}
       </nav>
 
-      <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mb-3 text-sm text-suave">
         {vagas.length} de {todasAsVagas.length} vagas
       </p>
 
+      {vagas.length === 0 && (
+        <p className="rounded-lg border border-dashed border-borda p-6 text-center text-sm text-suave">
+          Nenhuma vaga neste filtro.
+        </p>
+      )}
+
       <ul className="flex flex-col gap-3">
         {vagas.map((vaga) => (
-          <li key={vaga.id} className="rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
+          // relative: o link do título estica-se por todo o cartão (ver o after: abaixo)
+          <li
+            key={vaga.id}
+            className="relative rounded-lg border border-borda bg-superficie p-5 transition-colors hover:border-destaque"
+          >
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 {/* Link do Next: muda de página sem recarregar tudo */}
-                <Link href={`/vagas/${vaga.id}`} className="font-medium hover:underline">
+                <Link
+                  href={`/vagas/${vaga.id}`}
+                  className="font-medium text-destaque after:absolute after:inset-0 hover:underline"
+                >
                   {vaga.titulo}
                 </Link>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {vaga.empresa} · {vaga.localizacao} · {vaga.regime}
-                </p>
-                {/* O selo só aparece se a vaga já tem candidatura */}
-                {vaga.candidatura_estado && (
-                  <span className="mt-2 inline-block rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium dark:bg-zinc-800">
-                    {textoDoEstado(vaga.candidatura_estado)}
-                  </span>
-                )}
+                <p className="mt-0.5 text-sm">{vaga.empresa}</p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {vaga.localizacao && <Etiqueta>{vaga.localizacao}</Etiqueta>}
+                  {vaga.regime && <Etiqueta capitalizar>{vaga.regime}</Etiqueta>}
+                  {/* O selo só aparece se a vaga já tem candidatura */}
+                  {vaga.candidatura_estado && (
+                    <span className="rounded-md bg-destaque/10 px-2 py-0.5 text-xs font-medium text-destaque">
+                      {textoDoEstado(vaga.candidatura_estado)}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="text-xl font-bold">{vaga.score}/100</span>
+              <Score valor={vaga.score} />
             </div>
           </li>
         ))}

@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import GraficoCustos from "./GraficoCustos";
 
 const URL_API = "http://127.0.0.1:8000";
 
@@ -43,11 +44,17 @@ function segundos(milissegundos: number | null): string {
   return milissegundos === null ? "-" : `${(milissegundos / 1000).toFixed(1)} s`;
 }
 
+// As classes que se repetem nas tabelas e nos títulos das secções.
+const TITULO = "mt-10 mb-1 text-lg font-semibold";
+const CARTAO_TABELA = "overflow-hidden rounded-lg border border-borda bg-superficie";
+const TH = "px-4 py-2 text-xs font-medium uppercase tracking-wide text-suave";
+const TD = "px-4 py-2";
+
 // Um cartão com um número grande e uma legenda.
 function Cartao({ titulo, valor }: { titulo: string; valor: string }) {
   return (
-    <div className="rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{titulo}</p>
+    <div className="rounded-lg border border-borda bg-superficie p-4">
+      <p className="text-sm text-suave">{titulo}</p>
       <p className="text-2xl font-bold">{valor}</p>
     </div>
   );
@@ -62,10 +69,7 @@ export default async function PaginaCustos() {
   if (resumo.execucoes === 0) {
     return (
       <main className="mx-auto max-w-3xl p-8">
-        <Link href="/" className="text-sm text-zinc-600 hover:underline dark:text-zinc-400">
-          ← Vagas
-        </Link>
-        <p className="mt-4">Ainda não há execuções registadas. Corre python diario.py primeiro.</p>
+        <p>Ainda não há execuções registadas. Corre python diario.py primeiro.</p>
       </main>
     );
   }
@@ -75,10 +79,7 @@ export default async function PaginaCustos() {
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <Link href="/" className="text-sm text-zinc-600 hover:underline dark:text-zinc-400">
-        ← Vagas
-      </Link>
-      <h1 className="mt-4 mb-6 text-2xl font-semibold">Custos e tempos</h1>
+      <h1 className="mb-6 text-2xl font-semibold">Custos e tempos</h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Cartao titulo="Análises" valor={String(resumo.execucoes)} />
@@ -86,94 +87,118 @@ export default async function PaginaCustos() {
         <Cartao titulo="Custo médio" valor={dolares(resumo.custo_medio)} />
         <Cartao titulo="Duração média" valor={segundos(resumo.duracao_media_ms)} />
       </div>
-      <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-3 text-sm text-suave">
         {resumo.ok} com relatório, {resumo.sem_relatorio} sem relatório, {resumo.erro} com erro ·{" "}
         {resumo.tokens_entrada.toLocaleString("pt-PT")} tokens de entrada,{" "}
         {resumo.tokens_saida.toLocaleString("pt-PT")} de saída. O custo é uma estimativa.
       </p>
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Custo por dia (últimos 7 dias com análises)</h2>
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-zinc-300 dark:border-zinc-700">
-            <th className="py-1">Dia</th>
-            <th>Análises</th>
-            <th>Custo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {custos.por_dia.map((linha) => (
-            <tr key={linha.dia} className="border-b border-zinc-200 dark:border-zinc-800">
-              <td className="py-1">{linha.dia}</td>
-              <td>{linha.execucoes}</td>
-              <td>{dolares(linha.custo)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2 className={TITULO}>Custo por dia</h2>
+      <p className="mb-3 text-sm text-suave">Últimos {custos.por_dia.length} dias com análises, em dólares.</p>
+      <GraficoCustos dias={custos.por_dia} />
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">Ferramentas (das mais lentas para as mais rápidas)</h2>
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-zinc-300 dark:border-zinc-700">
-            <th className="py-1">Ferramenta</th>
-            <th>Chamadas</th>
-            <th>Média</th>
-            <th>Máx.</th>
-            <th>Erros</th>
-          </tr>
-        </thead>
-        <tbody>
-          {custos.ferramentas.map((linha) => (
-            <tr key={linha.nome} className="border-b border-zinc-200 dark:border-zinc-800">
-              <td className="py-1">{linha.nome}</td>
-              <td>{linha.chamadas}</td>
-              <td>{segundos(linha.media_ms)}</td>
-              <td>{segundos(linha.max_ms)}</td>
-              <td>{linha.erros}</td>
+      {/* A mesma informação em tabela: mostra os valores exatos sem ser preciso passar o rato */}
+      <div className={CARTAO_TABELA + " mt-3"}>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-borda">
+              <th className={TH}>Dia</th>
+              <th className={TH + " text-right"}>Análises</th>
+              <th className={TH + " text-right"}>Custo</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {custos.por_dia.map((linha) => (
+              <tr key={linha.dia} className="border-b border-borda last:border-0">
+                <td className={TD}>{linha.dia}</td>
+                <td className={TD + " text-right tabular-nums"}>{linha.execucoes}</td>
+                <td className={TD + " text-right tabular-nums"}>{dolares(linha.custo)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 className={TITULO}>Ferramentas</h2>
+      <p className="mb-3 text-sm text-suave">Das mais lentas para as mais rápidas.</p>
+      <div className={CARTAO_TABELA}>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-borda">
+              <th className={TH}>Ferramenta</th>
+              <th className={TH + " text-right"}>Chamadas</th>
+              <th className={TH + " text-right"}>Média</th>
+              <th className={TH + " text-right"}>Máx.</th>
+              <th className={TH + " text-right"}>Erros</th>
+            </tr>
+          </thead>
+          <tbody>
+            {custos.ferramentas.map((linha) => (
+              <tr key={linha.nome} className="border-b border-borda last:border-0">
+                <td className={TD}>{linha.nome}</td>
+                <td className={TD + " text-right tabular-nums"}>{linha.chamadas}</td>
+                <td className={TD + " text-right tabular-nums"}>{segundos(linha.media_ms)}</td>
+                <td className={TD + " text-right tabular-nums"}>{segundos(linha.max_ms)}</td>
+                <td className={TD + " text-right tabular-nums"}>{linha.erros}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {tempoTotal > 0 && (
         <>
-          <h2 className="mt-8 mb-2 text-lg font-semibold">Onde vai o tempo</h2>
-          <ul className="text-sm">
+          <h2 className={TITULO}>Onde vai o tempo</h2>
+          <p className="mb-3 text-sm text-suave">Parte do tempo total de todas as análises.</p>
+          <div className="flex flex-col gap-4 rounded-lg border border-borda bg-superficie p-4">
             {[...custos.tempos]
               .sort((a, b) => (b.total_ms ?? 0) - (a.total_ms ?? 0))
-              .map((item) => (
-                <li key={item.tipo}>
-                  {item.tipo}: {segundos(item.total_ms)} ({Math.round(((item.total_ms ?? 0) / tempoTotal) * 100)}%)
-                </li>
-              ))}
-          </ul>
+              .map((item) => {
+                const percentagem = Math.round(((item.total_ms ?? 0) / tempoTotal) * 100);
+                return (
+                  <div key={item.tipo}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span className="capitalize">{item.tipo === "modelo" ? "Modelo" : "Ferramentas"}</span>
+                      <span className="text-suave tabular-nums">
+                        {segundos(item.total_ms)} · {percentagem}%
+                      </span>
+                    </div>
+                    {/* A pista é a parte vazia; o preenchimento é a parte do tempo */}
+                    <div className="h-2 rounded-full bg-borda">
+                      <div className="h-2 rounded-full bg-destaque" style={{ width: `${percentagem}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
         </>
       )}
 
-      <h2 className="mt-8 mb-2 text-lg font-semibold">As 3 análises mais caras</h2>
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-zinc-300 dark:border-zinc-700">
-            <th className="py-1">Vaga</th>
-            <th>Custo</th>
-            <th>Tokens</th>
-            <th>Tempo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {custos.mais_caras.map((linha, posicao) => (
-            <tr key={posicao} className="border-b border-zinc-200 dark:border-zinc-800">
-              <td className="py-1">{linha.vaga}</td>
-              <td>{dolares(linha.custo_estimado)}</td>
-              <td>
-                {linha.tokens_entrada.toLocaleString("pt-PT")} + {linha.tokens_saida.toLocaleString("pt-PT")}
-              </td>
-              <td>{segundos(linha.duracao_ms)}</td>
+      <h2 className={TITULO}>As 3 análises mais caras</h2>
+      <div className={CARTAO_TABELA + " mt-3"}>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-borda">
+              <th className={TH}>Vaga</th>
+              <th className={TH + " text-right"}>Custo</th>
+              <th className={TH + " text-right"}>Tokens</th>
+              <th className={TH + " text-right"}>Tempo</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {custos.mais_caras.map((linha, posicao) => (
+              <tr key={posicao} className="border-b border-borda last:border-0">
+                <td className={TD}>{linha.vaga}</td>
+                <td className={TD + " text-right tabular-nums"}>{dolares(linha.custo_estimado)}</td>
+                <td className={TD + " text-right tabular-nums"}>
+                  {linha.tokens_entrada.toLocaleString("pt-PT")} + {linha.tokens_saida.toLocaleString("pt-PT")}
+                </td>
+                <td className={TD + " text-right tabular-nums"}>{segundos(linha.duracao_ms)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }

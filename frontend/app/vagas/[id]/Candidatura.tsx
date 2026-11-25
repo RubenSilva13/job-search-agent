@@ -47,7 +47,7 @@ export default function Candidatura({ vagaId, estadoInicial, notasIniciais, data
   }
 
   return (
-    <section className="mt-8 rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
+    <section className="mt-8 rounded-lg border border-borda bg-superficie p-4">
       <h2 className="mb-3 text-lg font-semibold">Candidatura</h2>
 
       <div className="flex flex-col gap-3">
@@ -56,7 +56,7 @@ export default function Candidatura({ vagaId, estadoInicial, notasIniciais, data
           <select
             value={estado}
             onChange={(evento) => setEstado(evento.target.value)}
-            className="rounded border border-zinc-300 bg-transparent p-2 dark:border-zinc-700"
+            className="rounded border border-borda bg-superficie p-2"
           >
             <option value="" disabled>
               Sem estado
@@ -75,11 +75,11 @@ export default function Candidatura({ vagaId, estadoInicial, notasIniciais, data
             value={notas}
             onChange={(evento) => setNotas(evento.target.value)}
             rows={3}
-            className="rounded border border-zinc-300 bg-transparent p-2 dark:border-zinc-700"
+            className="rounded border border-borda bg-superficie p-2"
           />
         </label>
 
-        {data && <p className="text-sm text-zinc-600 dark:text-zinc-400">Candidatura feita em {data}</p>}
+        {data && <p className="text-sm text-suave">Candidatura feita em {data}</p>}
 
         <div className="flex items-center gap-3">
           <button
