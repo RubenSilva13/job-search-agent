@@ -10,6 +10,9 @@ Também faz uma varredura de vagas: com `python diario.py` recolhe as vagas mais
 (API oficial), filtra-as pelas preferências do perfil (cidade, regime, nível júnior, área) e analisa
 as que passam, guardando tudo numa base de dados PostgreSQL.
 
+Um painel em Next.js mostra as vagas por score, o relatório de cada uma, o acompanhamento das
+candidaturas e os custos, e permite analisar uma vaga nova a partir do link.
+
 ## Como funciona
 
 O ciclo do agente está escrito à mão, sem LangChain nem outros frameworks de agentes, para se
@@ -132,6 +135,32 @@ versão.
 O método, os ficheiros e as regras para repetir a avaliação estão em
 [avaliacao/README.md](avaliacao/README.md).
 
+## Painel
+
+O painel é uma aplicação Next.js (React, TypeScript e Tailwind) que lê a base de dados através de
+uma API pequena em FastAPI (`api.py`).
+
+| Página | O que mostra |
+|---|---|
+| `/` Vagas | As vagas analisadas, da maior para a menor pontuação, com o score a cores e o estado da candidatura. Filtra por estado (sem candidatura, candidatado, entrevista, ...) |
+| `/vagas/{id}` | O relatório completo: requisitos com a cor do estado e a prova de cada um, a empresa e as sugestões. Aqui escolho o estado da candidatura e escrevo notas |
+| `/nova` | Colo o link de um anúncio e o agente analisa-o em segundo plano (cerca de 30 s). Quando acaba, abre o relatório |
+| `/custos` | Custos e tempos das análises: totais, custo por dia (gráfico), ferramentas mais lentas e onde vai o tempo |
+
+A API tem estes endpoints:
+
+| Endpoint | O que faz |
+|---|---|
+| `GET /vagas` | Lista as vagas analisadas, com a análise mais recente e o estado da candidatura |
+| `GET /vagas/{id}` | Uma vaga com o relatório completo |
+| `PUT /vagas/{id}/candidatura` | Cria ou atualiza a candidatura (estado e notas) |
+| `POST /analises` | Arranca a análise de um link, em segundo plano. Só corre uma de cada vez |
+| `GET /analises/{id}` | Como vai a análise: `a_analisar`, `pronta` ou `erro` |
+| `GET /custos` | Os mesmos números do `custos.py`, em JSON |
+
+O painel é uma ferramenta pessoal: não tem contas nem login, e todas as vagas são analisadas contra o
+meu perfil e o meu GitHub.
+
 ## Estrutura
 
 ```
@@ -147,6 +176,8 @@ filtro.py           decide se uma vaga serve (senioridade, anos pedidos, área, 
 analise_diaria.py   analisa com o agente as vagas aceites que ainda não têm análise
 diario.py           comando único: recolher, filtrar e analisar
 custos.py           relatório de custos e tempos das análises (lê a base de dados)
+api.py              API FastAPI: vagas, candidaturas, análise por link e custos
+frontend/           painel em Next.js (as páginas estão em frontend/app)
 avaliacao/          avaliação do score contra vagas classificadas à mão (tem o seu README)
 docker-compose.yml  PostgreSQL num contentor Docker
 perfil.json         perfil do utilizador, carregado para a base de dados
@@ -195,6 +226,18 @@ Para ver quanto custaram e quanto demoraram as análises:
 python custos.py
 ```
 
+Para ver o painel (precisa do Docker aberto e do Node.js), em dois terminais:
+
+```bash
+uvicorn api:app --reload      # a API, em http://127.0.0.1:8000 (com o venv ativo)
+```
+
+```bash
+cd frontend
+npm install                   # só da primeira vez
+npm run dev                   # o painel, em http://localhost:3000
+```
+
 Para analisar uma vaga em concreto, o nome de utilizador do GitHub indica-se na tarefa:
 
 ```bash
@@ -223,12 +266,19 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
 - O limite de uma pesquisa web por análise é uma instrução ao modelo, não uma garantia do código.
 - O custo é uma estimativa: tokens devolvidos pela API vezes a tabela de preços do `config.py`
   (verificada em 2026-11-03), que convém rever de vez em quando.
+- A API não tem autenticação, e cada análise pedida no painel gasta a chave da Anthropic. Serve para
+  correr em local; para publicar, a escrita (`/nova` e as candidaturas) teria de ficar desligada ou
+  protegida.
+- Uma análise pedida no painel fica registada em memória: se a API reiniciar a meio (por exemplo,
+  com o `--reload` ao gravar um ficheiro), perde-se o seguimento dessa análise.
+- Os endereços da API (`http://127.0.0.1:8000`) estão escritos no código do frontend.
 
 ## Estado e próximos passos
 
 Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatório estruturado com
 Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil, as
 vagas e as análises, a recolha, filtro e análise de vagas do ITJobs com um só comando, e o registo de
-duração, tokens e custo de cada análise, e a avaliação do score contra vagas classificadas à mão.
+duração, tokens e custo de cada análise, a avaliação do score contra vagas classificadas à mão, e o
+painel em Next.js com a API em FastAPI.
 
-Planeado (ver [ROADMAP.md](ROADMAP.md)): frontend em React/Next.js, testes, CI e deploy.
+Planeado (ver [ROADMAP.md](ROADMAP.md)): testes, CI e deploy.

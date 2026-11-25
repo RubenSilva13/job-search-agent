@@ -11,7 +11,7 @@ prepara tudo e eu decido.
 4. ✅ Recolha de vagas a partir de fontes com acesso oficial (ITJobs), filtro pelas preferências e análise automática, com um só comando (python diario.py). Corre a pedido, não agendada
 5. ✅ Registo de cada execução do agente (duração, tokens, custo e passos) na base de dados, e relatório de custos (python custos.py)
 6. ✅ Avaliação: vagas classificadas por mim (24 de desenvolvimento e 15 de teste, nunca vistas), com o score comparado com as minhas notas e a estabilidade medida em 3 repetições (ver avaliacao/)
-7. Frontend em React/Next.js: painel de vagas e candidaturas
+7. ✅ Frontend em Next.js com uma API em FastAPI: lista de vagas por score, relatório de cada uma, acompanhamento das candidaturas, análise de uma vaga a partir do link e página de custos
 8. Testes, CI com GitHub Actions, Docker e deploy
 
 ## Decisões já tomadas
@@ -30,6 +30,12 @@ prepara tudo e eu decido.
   que o agente nunca analisou, e fica "queimado" depois de ver o resultado: uma melhoria nova
   confirma-se com vagas novas.
 - O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
+- O painel é uma ferramenta pessoal, sem contas: o perfil é uma só linha da base de dados e o GitHub
+  vem do config.py. Para publicar (fase 8), o caminho escolhido é uma demo só de leitura, com as
+  análises reais e a escrita desligada ou protegida, porque cada análise gasta a chave da Anthropic.
+  Torná-lo multiutilizador mudaria a base de dados e só se faz se o objetivo mudar.
+- No frontend, a lista e o detalhe lêem a API no servidor do Next.js; só o que reage ao clique
+  (candidatura, análise por link) corre no browser.
 
 ## Problemas conhecidos
 - O score ainda oscila entre execuções da mesma vaga (8,1 pontos em média no teste, 33 no pior caso).
@@ -46,11 +52,21 @@ prepara tudo e eu decido.
   de requisitos contáveis ao lado do score, e devolver dois números (cobertura e ajuste ao que
   procuro).
 - O perfil existe em dois sítios (perfil.json e base de dados). Edita-se o ficheiro e recarrega-se
-  com python base_de_dados.py. Fica só a base de dados quando existir o frontend (fase 7).
+  com python base_de_dados.py. O painel não edita o perfil, por isso continua assim.
 - O url da vaga é guardado como veio, com parâmetros de rastreio. A mesma vaga com outro link
   pode entrar duas vezes. Fica por tratar.
-- A tabela candidaturas ainda não é usada. As preferências do perfil só são usadas pelo filtro,
-  não pelo agente na análise.
+- As preferências do perfil só são usadas pelo filtro, não pelo agente na análise.
+- A API não tem autenticação, e cada análise pedida no painel (POST /analises) gasta a chave da
+  Anthropic. Serve para correr em local. O estado das análises pedidas fica em memória: se a API
+  reiniciar a meio (o --reload reinicia ao gravar um ficheiro), perde-se o seguimento.
+- Os endereços da API estão escritos no código do frontend (http://127.0.0.1:8000). Passam para uma
+  variável de ambiente no deploy.
+- As consultas SQL dos custos existem em dois sítios (custos.py e api.py). Podiam passar para uma
+  função em base_de_dados.py.
+- Uma análise pedida no painel fica em execucoes sem vaga_id (o id só se conhece depois do
+  relatório), por isso na página de custos aparece como "(sem vaga)". O python agente.py faz o mesmo.
+- A lista do painel filtra no Next.js, depois de a API devolver todas as vagas. Com milhares de
+  vagas, o filtro passaria para a API.
 - O significado do campo workModel do ITJobs (0, 1, 2) é uma hipótese por confirmar. Condiciona o
   filtro de regime (presencial, remoto, híbrido).
 - O filtro de vagas é por palavras no título e por anos de experiência no texto. É uma heurística:

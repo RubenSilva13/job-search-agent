@@ -10,6 +10,9 @@ Agente de procura de emprego: lê um anúncio de vaga, analisa o portfólio GitH
 - modelos.py — Relatorio e Requisito (Pydantic, com validadores)
 - agente.py — ciclo do agente escrito à mão (sem LangChain), formato da API da Anthropic
   (tool_use / tool_result), com cache e validação do relatório
+- api.py — API FastAPI (uvicorn api:app --reload) que o painel usa: vagas, candidaturas, análise por link, custos
+- frontend/ — painel em Next.js (npm run dev dentro de frontend/); as páginas estão em frontend/app.
+  O Next.js desta versão traz a documentação em frontend/node_modules/next/dist/docs/
 - requirements.txt — dependências (anthropic, pydantic, requests, beautifulsoup4, ddgs, python-dotenv)
 - As descrições das ferramentas usam o formato da Anthropic: name, description, input_schema
 
