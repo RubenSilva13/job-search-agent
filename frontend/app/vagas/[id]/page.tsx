@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Candidatura from "./Candidatura";
 
 type Requisito = {
   requisito: string;
@@ -23,6 +24,9 @@ type Vaga = {
   url: string;
   score: number;
   relatorio: Relatorio;
+  candidatura_estado: string | null;
+  candidatura_notas: string | null;
+  data_candidatura: string | null;
 };
 
 const URL_API = "http://127.0.0.1:8000";
@@ -71,6 +75,13 @@ export default async function PaginaDetalhe({
         </div>
         <span className="text-3xl font-bold">{vaga.score}/100</span>
       </div>
+
+      <Candidatura
+        vagaId={vaga.id}
+        estadoInicial={vaga.candidatura_estado}
+        notasIniciais={vaga.candidatura_notas}
+        dataInicial={vaga.data_candidatura}
+      />
 
       <h2 className="mt-8 mb-2 text-lg font-semibold">A empresa</h2>
       <p>{relatorio.resumo_empresa}</p>
