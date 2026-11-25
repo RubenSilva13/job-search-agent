@@ -6,16 +6,14 @@ from base_de_dados import abrir_ligacao
 
 app = FastAPI(title="job-search-agent")
 
-# O Next.js corre noutra porta (3000). O browser só deixa a página chamar esta API
-# se a API disser que aceita pedidos vindos dessa origem.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_methods=["GET"],
 )
 
-# Uma linha por vaga, com a análise mais recente (DISTINCT ON fica com a primeira
-# linha de cada vaga, e o ORDER BY põe a análise mais recente primeiro).
+
 CONSULTA_VAGAS = """
     SELECT DISTINCT ON (vagas.id)
         vagas.id,
