@@ -1,0 +1,84 @@
+name: CI
+
+# Corre a cada push para o main e a cada pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# O GitHub só precisa de ler o código: nenhum passo escreve no repositório.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Testes do backend
+    runs-on: ubuntu-latest
+
+    # Um PostgreSQL só para esta corrida, igual ao do docker-compose.yml.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: agente
+          POSTGRES_PASSWORD: senha-so-da-ci
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        # só avança quando a base de dados já aceita ligações
+        options: >-
+          --health-cmd "pg_isready -U agente"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # o config.py lê esta variável para se ligar à base de dados do serviço acima
+      POSTGRES_PASSWORD: senha-so-da-ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+
+      # Sem chave da Anthropic: os testes nunca chamam o modelo.
+      - name: Correr os testes
+        run: pytest
+
+  frontend:
+    name: Frontend (tipos, lint e build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # npm ci instala exatamente o que está no package-lock.json
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar os tipos
+        run: npx tsc --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      # funciona sem a API: as páginas só vão buscar dados quando alguém as abre
+      - name: Build de produção
+        run: npm run build

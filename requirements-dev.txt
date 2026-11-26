@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest==9.0.3
+# o TestClient do FastAPI usa o httpx para fazer os pedidos aos endpoints
+httpx==0.28.1

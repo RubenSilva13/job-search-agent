@@ -1,5 +1,7 @@
 # job-search-agent
 
+[![CI](https://github.com/RubenSilva13/job-search-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/RubenSilva13/job-search-agent/actions/workflows/ci.yml)
+
 Agente de procura de emprego. Recebe o link de uma vaga, lê o anúncio, analisa o portfólio GitHub
 e o perfil do utilizador, pesquisa a empresa e entrega um relatório estruturado: que requisitos
 da vaga o utilizador cumpre, com a prova de cada um, um score de compatibilidade e sugestões.
