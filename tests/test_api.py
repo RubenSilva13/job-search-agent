@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api
-from modelos import Relatorio, Requisito
+from ajudas import relatorio_valido
 
 
 @pytest.fixture(autouse=True)
@@ -16,17 +16,6 @@ def analises_vazias(monkeypatch):
 @pytest.fixture
 def cliente():
     return TestClient(api.app)
-
-
-def relatorio_valido():
-    return Relatorio(
-        vaga="Programador Python",
-        empresa="Empresa X",
-        localizacao="Braga",
-        requisitos=[Requisito(requisito="Python", estado="cumpre", evidencia="repo: README")],
-        resumo_empresa="Uma empresa.",
-        sugestoes=["Uma sugestão."],
-    )
 
 
 # ---------- POST /analises: validações ----------
