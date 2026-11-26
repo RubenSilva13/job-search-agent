@@ -73,6 +73,11 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      # O Next gera alguns tipos (como o LayoutProps) quando corre o dev ou o build.
+      # Num clone novo ainda não existem, e sem eles o tsc falha.
+      - name: Gerar os tipos das rotas
+        run: npx next typegen
+
       - name: Verificar os tipos
         run: npx tsc --noEmit
 
