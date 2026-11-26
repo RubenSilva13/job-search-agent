@@ -52,6 +52,20 @@ jobs:
       - name: Correr os testes
         run: pytest
 
+  docker:
+    name: Imagens Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Só constrói, não publica nada: serve para apanhar um Dockerfile estragado.
+      - name: Construir a imagem da API
+        run: docker build --tag job-search-api .
+
+      - name: Construir a imagem do painel
+        run: docker build --tag job-search-frontend ./frontend
+
   frontend:
     name: Frontend (tipos, lint e build)
     runs-on: ubuntu-latest

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { URL_API_BROWSER } from "../../api";
 import { ESTADOS } from "../../estados";
 
-const URL_API = "http://127.0.0.1:8000";
 
 type Props = {
   vagaId: number;
@@ -25,7 +25,7 @@ export default function Candidatura({ vagaId, estadoInicial, notasIniciais, data
     setAGuardar(true);
     setMensagem("");
     try {
-      const resposta = await fetch(`${URL_API}/vagas/${vagaId}/candidatura`, {
+      const resposta = await fetch(`${URL_API_BROWSER}/vagas/${vagaId}/candidatura`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         // notas vazias vão como null, para a base de dados não guardar texto vazio

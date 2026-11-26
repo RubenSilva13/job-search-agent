@@ -1,7 +1,7 @@
 
+import { URL_API_SERVIDOR } from "../api";
 import GraficoCustos from "./GraficoCustos";
 
-const URL_API = "http://127.0.0.1:8000";
 
 // A forma do JSON de GET /custos. Os valores numéricos podem vir a null
 // (por exemplo, a média de uma coluna sem valores).
@@ -61,7 +61,7 @@ function Cartao({ titulo, valor }: { titulo: string; valor: string }) {
 }
 
 export default async function PaginaCustos() {
-  const resposta = await fetch(`${URL_API}/custos`);
+  const resposta = await fetch(`${URL_API_SERVIDOR}/custos`);
   const custos: Custos = await resposta.json();
   const resumo = custos.resumo;
 

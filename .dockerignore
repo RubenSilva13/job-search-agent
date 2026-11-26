@@ -1,0 +1,26 @@
+# O que NÃO entra na imagem da API. Os segredos e o lixo ficam de fora.
+.env
+.env.*
+.git
+.github
+.gitignore
+.pytest_cache
+.claude
+
+# ambientes e caches locais
+venv
+__pycache__
+*.pyc
+
+# dados e textos que não pertencem à imagem
+relatorios
+avaliacao
+
+# o resto do projeto que a API não usa
+tests
+frontend
+docker-compose.yml
+Dockerfile
+*.md
+requirements-dev.txt
+pytest.ini

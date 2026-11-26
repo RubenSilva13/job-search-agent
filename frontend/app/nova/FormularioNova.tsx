@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { URL_API_BROWSER } from "../api";
 
-const URL_API = "http://127.0.0.1:8000";
 const PAUSA_MS = 2000;
 
 // Espera um tempo (em milissegundos) dentro de uma função async.
@@ -34,7 +34,7 @@ export default function FormularioNova() {
 
     try {
       // 1. Pede à API para arrancar a análise. Responde logo com um id.
-      const pedido = await fetch(`${URL_API}/analises`, {
+      const pedido = await fetch(`${URL_API_BROWSER}/analises`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
@@ -53,7 +53,7 @@ export default function FormularioNova() {
         await esperar(PAUSA_MS);
         setSegundos(Math.round((Date.now() - inicio) / 1000));
 
-        const resposta = await fetch(`${URL_API}/analises/${id}`);
+        const resposta = await fetch(`${URL_API_BROWSER}/analises/${id}`);
         const analise = await resposta.json();
 
         if (analise.estado === "pronta") {

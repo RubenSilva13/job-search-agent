@@ -47,6 +47,12 @@ CONSULTA_VAGAS = """
 """
 
 
+@app.get("/saude")
+def saude():
+    """Diz que a API está viva. Não toca na base de dados: o Docker pergunta isto de poucos em poucos segundos."""
+    return {"ok": True}
+
+
 @app.get("/vagas")
 def listar_vagas():
     """Vagas analisadas, da maior para a menor pontuação."""

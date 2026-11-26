@@ -18,6 +18,14 @@ def cliente():
     return TestClient(api.app)
 
 
+# ---------- GET /saude ----------
+
+def test_saude_responde_ok_sem_precisar_da_base_de_dados(cliente):
+    resposta = cliente.get("/saude")
+    assert resposta.status_code == 200
+    assert resposta.json() == {"ok": True}
+
+
 # ---------- POST /analises: validações ----------
 
 @pytest.mark.parametrize("url", ["isto-nao-e-um-link", "ftp://servidor/vaga", "", "   "])

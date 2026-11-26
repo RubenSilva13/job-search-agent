@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { URL_API_SERVIDOR } from "./api";
 import { ESTADOS, textoDoEstado } from "./estados";
 import Etiqueta from "./Etiqueta";
 import Score from "./Score";
@@ -16,7 +17,6 @@ type Vaga = {
   candidatura_estado: string | null;
 };
 
-const URL_API = "http://127.0.0.1:8000";
 
 // Os filtros: "todas" (sem parâmetro), "sem" (vagas sem candidatura) e cada estado.
 const FILTROS = [
@@ -34,7 +34,7 @@ export default async function PaginaVagas({
   const { estado: filtro = "" } = await searchParams;
 
   // Pede a lista à API. O await espera pela resposta antes de avançar.
-  const resposta = await fetch(`${URL_API}/vagas`);
+  const resposta = await fetch(`${URL_API_SERVIDOR}/vagas`);
 
   // Lê o corpo da resposta como JSON. O ": Vaga[]" diz ao TypeScript que é uma lista de Vaga.
   const todasAsVagas: Vaga[] = await resposta.json();

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { URL_API_SERVIDOR } from "../../api";
 import Etiqueta from "../../Etiqueta";
 import Score from "../../Score";
 import Candidatura from "./Candidatura";
@@ -31,7 +32,6 @@ type Vaga = {
   data_candidatura: string | null;
 };
 
-const URL_API = "http://127.0.0.1:8000";
 
 // Texto e cores de cada estado de um requisito: a barra do lado esquerdo do cartão e a etiqueta.
 const ESTADOS = {
@@ -49,7 +49,7 @@ export default async function PaginaDetalhe({
   // No Next 16 o params é uma promessa: tem de levar await.
   const { id } = await params;
 
-  const resposta = await fetch(`${URL_API}/vagas/${id}`);
+  const resposta = await fetch(`${URL_API_SERVIDOR}/vagas/${id}`);
 
   // A API responde 404 quando a vaga não existe ou não tem análise.
   if (resposta.status === 404) {

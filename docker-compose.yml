@@ -16,6 +16,56 @@ services:
       - dados_postgres:/var/lib/postgresql/data
       # os ficheiros desta pasta correm na primeira vez que a base de dados é criada
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    # o Docker pergunta de 5 em 5 segundos se a base de dados já aceita ligações;
+    # a API só arranca depois de ela dizer que sim
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agente -d job_search"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # A API e o painel ficam no profile "app": o "docker compose up -d" de sempre continua a
+  # levantar só a base de dados. Para levantar tudo:
+  #   docker compose --profile app up -d --build
+  api:
+    profiles: ["app"]
+    build: .
+    container_name: job-search-api
+    restart: unless-stopped
+    # as chaves (Anthropic, GitHub, ITJobs) e a palavra-passe passam do .env para o contentor,
+    # sem ficarem escritas na imagem
+    env_file: .env
+    environment:
+      # dentro do Docker, a base de dados chama-se pelo nome do serviço
+      BD_SERVIDOR: base_de_dados
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      base_de_dados:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/saude')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+      args:
+        # o endereço da API visto do browser (fica escrito no código na altura do build)
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: job-search-frontend
+    restart: unless-stopped
+    environment:
+      # o servidor do Next.js chega à API pelo nome do serviço
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   dados_postgres:
