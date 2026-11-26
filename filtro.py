@@ -88,7 +88,8 @@ def avaliar_localizacao(vaga, preferencias):
         if local == "qualquer local":
             local_serve = True
         else:
-            local_serve = any(local in local_vaga for local_vaga in locais_da_vaga)
+            # palavra inteira: "braga" não pode servir para "braganca"
+            local_serve = any(re.search(rf"\b{re.escape(local)}\b", local_vaga) for local_vaga in locais_da_vaga)
 
         regime_serve = vaga["regime"] in preferencia["regimes"]
 
