@@ -6,6 +6,10 @@
   <img src="docs/demo.gif" alt="O painel a analisar uma vaga nova a partir do link" width="800">
 </p>
 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=mztZ7tqgGQQ">▶ Ver o vídeo de demonstração do painel</a>
+</p>
+
 Agente de procura de emprego. Recebe o link de uma vaga, lê o anúncio, analisa o portfólio GitHub
 e o perfil do utilizador, pesquisa a empresa e entrega um relatório estruturado: que requisitos
 da vaga o utilizador cumpre, com a prova de cada um, um score de compatibilidade e sugestões.
