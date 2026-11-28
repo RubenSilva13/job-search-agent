@@ -12,7 +12,7 @@ prepara tudo e eu decido.
 5. ✅ Registo de cada execução do agente (duração, tokens, custo e passos) na base de dados, e relatório de custos (python custos.py)
 6. ✅ Avaliação: vagas classificadas por mim (24 de desenvolvimento e 15 de teste, nunca vistas), com o score comparado com as minhas notas e a estabilidade medida em 3 repetições (ver avaliacao/)
 7. ✅ Frontend em Next.js com uma API em FastAPI: lista de vagas por score, relatório de cada uma, acompanhamento das candidaturas, análise de uma vaga a partir do link e página de custos
-8. Testes, CI com GitHub Actions, Docker e deploy
+8. ✅ Testes (111, com pytest, incluindo SQL contra um PostgreSQL a sério), CI com GitHub Actions e Docker (imagens da API e do painel, compose com profile app). O deploy não foi feito, por decisão (ver abaixo)
 
 ## Decisões já tomadas
 - O ciclo do agente é escrito à mão (sem LangChain) até à fase 2, para perceber como funciona.
@@ -31,9 +31,14 @@ prepara tudo e eu decido.
   confirma-se com vagas novas.
 - O agente nunca exagera a minha experiência: só afirma o que está escrito nos READMEs e no perfil.
 - O painel é uma ferramenta pessoal, sem contas: o perfil é uma só linha da base de dados e o GitHub
-  vem do config.py. Para publicar (fase 8), o caminho escolhido é uma demo só de leitura, com as
-  análises reais e a escrita desligada ou protegida, porque cada análise gasta a chave da Anthropic.
-  Torná-lo multiutilizador mudaria a base de dados e só se faz se o objetivo mudar.
+  vem do config.py. Torná-lo multiutilizador mudaria a base de dados e só se faz se o objetivo mudar.
+- Não há deploy. Uma demo pública pedia uma base de dados alojada, proteger a API (cada análise
+  gasta a chave da Anthropic) e mantê-la a funcionar, e um link morto prejudica mais do que ajuda.
+  O projeto mostra-se com o repositório (README, testes e CI) e com um vídeo do painel. Se um dia
+  se fizer, o caminho é uma demo só de leitura, com a escrita desligada.
+- Os testes usam uma base de dados à parte (job_search_teste), forçada pelo conftest.py, para nunca
+  tocarem na base real. Os endereços da API do painel vêm de variáveis de ambiente (API_URL no
+  servidor do Next.js e NEXT_PUBLIC_API_URL no browser), com o 127.0.0.1:8000 como valor por defeito.
 - No frontend, a lista e o detalhe lêem a API no servidor do Next.js; só o que reage ao clique
   (candidatura, análise por link) corre no browser.
 
@@ -59,8 +64,9 @@ prepara tudo e eu decido.
 - A API não tem autenticação, e cada análise pedida no painel (POST /analises) gasta a chave da
   Anthropic. Serve para correr em local. O estado das análises pedidas fica em memória: se a API
   reiniciar a meio (o --reload reinicia ao gravar um ficheiro), perde-se o seguimento.
-- Os endereços da API estão escritos no código do frontend (http://127.0.0.1:8000). Passam para uma
-  variável de ambiente no deploy.
+- A imagem Docker do painel pesa 1,1 GB, por levar todo o node_modules. O modo standalone do
+  Next.js reduzi-la-ia, mas só importa se houver deploy.
+- O Docker lê as chaves do ficheiro .env (env_file). Quem clonar o repositório tem de criar o seu.
 - As consultas SQL dos custos existem em dois sítios (custos.py e api.py). Podiam passar para uma
   função em base_de_dados.py.
 - Uma análise pedida no painel fica em execucoes sem vaga_id (o id só se conhece depois do

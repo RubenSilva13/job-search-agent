@@ -13,6 +13,10 @@ Agente de procura de emprego: lê um anúncio de vaga, analisa o portfólio GitH
 - api.py — API FastAPI (uvicorn api:app --reload) que o painel usa: vagas, candidaturas, análise por link, custos
 - frontend/ — painel em Next.js (npm run dev dentro de frontend/); as páginas estão em frontend/app.
   O Next.js desta versão traz a documentação em frontend/node_modules/next/dist/docs/
+- tests/ — testes com pytest (`pytest` na raiz; requirements-dev.txt). Usam a base de dados à parte
+  job_search_teste (o conftest.py força-a), nunca a real. A CI está em .github/workflows/ci.yml
+- Dockerfile (API), frontend/Dockerfile (painel) e docker-compose.yml: `docker compose up -d` levanta só a
+  base de dados; `docker compose --profile app up -d --build` levanta também a API e o painel
 - requirements.txt — dependências (anthropic, pydantic, requests, beautifulsoup4, ddgs, python-dotenv)
 - As descrições das ferramentas usam o formato da Anthropic: name, description, input_schema
 

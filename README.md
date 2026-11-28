@@ -163,6 +163,24 @@ A API tem estes endpoints:
 O painel é uma ferramenta pessoal: não tem contas nem login, e todas as vagas são analisadas contra o
 meu perfil e o meu GitHub.
 
+## Testes e CI
+
+Os testes usam o `pytest` e não gastam dinheiro: nunca chamam o modelo.
+
+| Ficheiro | O que testa |
+|---|---|
+| `tests/test_modelos.py` | O score (parcial a valer metade, `nao_confirmado` a não contar), os validadores da evidência, e que o modelo não consegue impor um score |
+| `tests/test_filtro.py` | Os anos de experiência pedidos, a senioridade, as funções fora da área, o local e o regime. Apanhou um bug: uma vaga em Bragança passava como Braga |
+| `tests/test_api.py` | As validações da API e a análise em segundo plano, com o agente e a base de dados substituídos por falsos |
+| `tests/test_base_de_dados.py`, `tests/test_api_bd.py` | O SQL a sério, contra um PostgreSQL: as candidaturas, a ordem das vagas, os custos |
+
+Os testes com base de dados correm numa base à parte, `job_search_teste`, que o `conftest.py` cria
+sozinho: um teste nunca escreve na base real. Se o Docker estiver fechado, esses testes saltam com
+um aviso.
+
+A cada push, o GitHub Actions (`.github/workflows/ci.yml`) arranca um PostgreSQL, corre os testes,
+verifica os tipos, o ESLint e o build do painel, e constrói as duas imagens Docker.
+
 ## Estrutura
 
 ```
@@ -179,9 +197,12 @@ analise_diaria.py   analisa com o agente as vagas aceites que ainda não têm an
 diario.py           comando único: recolher, filtrar e analisar
 custos.py           relatório de custos e tempos das análises (lê a base de dados)
 api.py              API FastAPI: vagas, candidaturas, análise por link e custos
-frontend/           painel em Next.js (as páginas estão em frontend/app)
+frontend/           painel em Next.js (as páginas estão em frontend/app; tem o seu Dockerfile)
+tests/              testes com pytest (requirements-dev.txt e pytest.ini)
 avaliacao/          avaliação do score contra vagas classificadas à mão (tem o seu README)
-docker-compose.yml  PostgreSQL num contentor Docker
+Dockerfile          imagem da API
+docker-compose.yml  PostgreSQL e, com o profile "app", a API e o painel
+.github/workflows/  a CI (GitHub Actions)
 perfil.json         perfil do utilizador, carregado para a base de dados
 ROADMAP.md          plano do projeto
 ```
@@ -240,6 +261,21 @@ npm install                   # só da primeira vez
 npm run dev                   # o painel, em http://localhost:3000
 ```
 
+Ou tudo em Docker (base de dados, API e painel), sem precisar do Python nem do Node no PC. Lê as
+chaves do `.env`:
+
+```bash
+docker compose --profile app up -d --build    # o painel em http://localhost:3000
+docker compose --profile app stop api frontend   # para parar a API e o painel
+```
+
+Para correr os testes (com o venv ativo; os que usam a base de dados precisam do Docker aberto):
+
+```bash
+pip install -r requirements-dev.txt    # só da primeira vez
+pytest
+```
+
 Para analisar uma vaga em concreto, o nome de utilizador do GitHub indica-se na tarefa:
 
 ```bash
@@ -273,7 +309,8 @@ Analisa esta vaga para o utilizador do GitHub RubenSilva13: https://exemplo.com/
   protegida.
 - Uma análise pedida no painel fica registada em memória: se a API reiniciar a meio (por exemplo,
   com o `--reload` ao gravar um ficheiro), perde-se o seguimento dessa análise.
-- Os endereços da API (`http://127.0.0.1:8000`) estão escritos no código do frontend.
+- O painel não está publicado online. Corre em local (ou em Docker na própria máquina), porque cada
+  análise gasta a chave da Anthropic e não há contas nem login.
 
 ## Estado e próximos passos
 
@@ -281,6 +318,6 @@ Concluído: ciclo do agente com ferramentas do GitHub, ferramentas web, relatór
 Pydantic, migração para a API do Claude, base de dados PostgreSQL (em Docker) com o perfil, as
 vagas e as análises, a recolha, filtro e análise de vagas do ITJobs com um só comando, e o registo de
 duração, tokens e custo de cada análise, a avaliação do score contra vagas classificadas à mão, e o
-painel em Next.js com a API em FastAPI.
+painel em Next.js com a API em FastAPI, os testes, a CI e o Docker.
 
-Planeado (ver [ROADMAP.md](ROADMAP.md)): testes, CI e deploy.
+O plano de 8 fases está concluído. O que ficou por fazer, e porquê, está no [ROADMAP.md](ROADMAP.md).
